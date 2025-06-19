@@ -319,7 +319,7 @@ async function sendOrderEmail(order) {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd;">
           <h2 style="color: #ff6b00;">Order Confirmation</h2>
-          <p>Dear ${sanitizeHtml(order.buyer,rightName)}</p>
+          <p>Dear ${sanitizeHtml(order.buyerName.charAt(0).toUpperCase() + order.buyerName.slice(1))}</p>
           <p>Thank you for shopping with AromaHut! Your order has been successfully placed.</p>
           <h3>Order Details</h3>
           <table style="width: 100%; border-collapse: collapse;">
@@ -360,4 +360,6 @@ app.use((err, req, res, next) => {
 
 // Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {});
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
