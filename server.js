@@ -9,7 +9,6 @@ const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
 
-
 const app = express();
 
 // Enable trust proxy for Render
@@ -24,7 +23,7 @@ app.use(rateLimit({
 }));
 
 // Validate environment variables
-const requiredEnvVars = ['MONGO_URI', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'EMAIL_USER', 'EMAIL_PASS'];
+const requiredEnvVars = ['MONGO_URI', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET'];
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 if (missingEnvVars.length) {
   console.error(`❌ Missing environment variables: ${missingEnvVars.join(', ')}`);
@@ -81,7 +80,7 @@ const razorpay = new Razorpay({
 app.get('/test-email', async (req, res) => {
   try {
     await sendOrderEmail({
-      buyerEmail: process.env.EMAIL_USER,
+      buyerEmail: 'aromahut24@gmail.com',
       buyerName: 'Test User',
       buyerAddress: '123 Test Street, Test City, 123456',
       items: [{ productName: 'Test Product', productPrice: 100, productQuantity: 1 }],
@@ -300,8 +299,8 @@ async function sendOrderEmail(order) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: 'aromahut24@gmail.com',
+        pass: 'zrbh uuok rhqe gyoi',
       },
     });
 
@@ -317,7 +316,7 @@ async function sendOrderEmail(order) {
     `).join('');
 
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: 'aromahut24@gmail.com',
       to: order.buyerEmail,
       subject: 'Thank You for Your Purchase from AromaHut!',
       html: `
@@ -343,7 +342,7 @@ async function sendOrderEmail(order) {
           <h3>Shipping To</h3>
           <p>${sanitizeHtml(order.buyerName.toUpperCase())}</p>
           <p>${sanitizeHtml([order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', ').toUpperCase())}</p>
-          <p>We’ll notify you once your order has shipped. For any questions, contact us at ${process.env.EMAIL_USER}.</p>
+          <p>We’ll notify you once your order has shipped. For any questions, contact us at aromahut24@gmail.com.</p>
           <p>Best regards,<br>AromaHut Team</p>
         </div>
       `,
