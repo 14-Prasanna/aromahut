@@ -23,7 +23,7 @@ app.use(rateLimit({
 }));
 
 // Validate environment variables
-const requiredEnvVars = ['MONGO_URI', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET'];
+const requiredEnvVars = ['MONGO_URI'];
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 if (missingEnvVars.length) {
   console.error(`❌ Missing environment variables: ${missingEnvVars.join(', ')}`);
@@ -72,8 +72,8 @@ const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 // Razorpay Initialization
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
+  key_id: 'rzp_live_0jmA0pn1TKRzf7',
+  key_secret: 'PwxPr4abPB4jDgz4AJjRUiQ6',
 });
 
 // Test Email Endpoint
@@ -168,7 +168,7 @@ app.post('/verify-payment', async (req, res) => {
   }
 
   // Verify Razorpay signature
-  const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+  const hmac = crypto.createHmac('sha256', 'PwxPr4abPB4jDgz4AJjRUiQ6');
   hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
   const generatedSignature = hmac.digest('hex');
 
