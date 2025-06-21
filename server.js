@@ -9,7 +9,11 @@ const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
 
+
 const app = express();
+
+// Enable trust proxy for Render
+app.set('trust proxy', 1);
 
 // Middleware
 app.use(express.json());
