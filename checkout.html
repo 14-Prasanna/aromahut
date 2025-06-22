@@ -29,8 +29,9 @@
   <link href="css/style.css" rel="stylesheet" />
 <link rel="icon" href="/img/aromahutTitleIcon.png" type="image/png">
 
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-<link rel="preload" href="https://checkout.razorpay.com/v1/checkout.js" as="script">  
+  
   <style>
     :root {
       --primary-orange: #ff6b00;
@@ -1066,7 +1067,7 @@ async function processPayment() {
         console.log('Order created:', order);
 
         const options = {
-            key: 'rzp_live_0jmA0pn1TKRzf7',
+            key: 'rzp_test_2pt2beElIhpZ8K',
             amount: order.amount,
             currency: 'INR',
             name: 'Aromahut',
