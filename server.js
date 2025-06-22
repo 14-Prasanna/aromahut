@@ -11,9 +11,6 @@ const sanitizeHtml = require('sanitize-html');
 
 const app = express();
 
-// Enable trust proxy for Render
-app.set('trust proxy', 1);
-
 // Middleware
 app.use(express.json());
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
@@ -23,7 +20,7 @@ app.use(rateLimit({
 }));
 
 // Validate environment variables
-const requiredEnvVars = ['MONGO_URI'];
+const requiredEnvVars = ['MONGO_URI', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'EMAIL_USER', 'EMAIL_PASS'];
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 if (missingEnvVars.length) {
   console.error(`❌ Missing environment variables: ${missingEnvVars.join(', ')}`);
@@ -72,15 +69,15 @@ const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 // Razorpay Initialization
 const razorpay = new Razorpay({
-  key_id: 'rzp_live_0jmA0pn1TKRzf7',
-  key_secret: 'PwxPr4abPB4jDgz4AJjRUiQ6',
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 // Test Email Endpoint
 app.get('/test-email', async (req, res) => {
   try {
     await sendOrderEmail({
-      buyerEmail: 'aromahut24@gmail.com',
+      buyerEmail: process.env.EMAIL_USER,
       buyerName: 'Test User',
       buyerAddress: '123 Test Street, Test City, 123456',
       items: [{ productName: 'Test Product', productPrice: 100, productQuantity: 1 }],
@@ -168,7 +165,7 @@ app.post('/verify-payment', async (req, res) => {
   }
 
   // Verify Razorpay signature
-  const hmac = crypto.createHmac('sha256', 'PwxPr4abPB4jDgz4AJjRUiQ6');
+  const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
   hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
   const generatedSignature = hmac.digest('hex');
 
@@ -299,8 +296,8 @@ async function sendOrderEmail(order) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'aromahut24@gmail.com',
-        pass: 'zrbh uuok rhqe gyoi',
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
@@ -316,7 +313,7 @@ async function sendOrderEmail(order) {
     `).join('');
 
     const mailOptions = {
-      from: 'aromahut24@gmail.com',
+      from: process.env.EMAIL_USER,
       to: order.buyerEmail,
       subject: 'Thank You for Your Purchase from AromaHut!',
       html: `
@@ -342,7 +339,7 @@ async function sendOrderEmail(order) {
           <h3>Shipping To</h3>
           <p>${sanitizeHtml(order.buyerName.toUpperCase())}</p>
           <p>${sanitizeHtml([order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', ').toUpperCase())}</p>
-          <p>We’ll notify you once your order has shipped. For any questions, contact us at aromahut24@gmail.com.</p>
+          <p>We’ll notify you once your order has shipped. For any questions, contact us at ${process.env.EMAIL_USER}.</p>
           <p>Best regards,<br>AromaHut Team</p>
         </div>
       `,
