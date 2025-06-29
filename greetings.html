@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Thank You - AromaHut</title>
+  <title>Thank You - Spice World Enterprises</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     :root {
@@ -12,7 +12,7 @@
       --light-orange: #ff8c00;
       --gold-accent: #ffd700;
       --spice-gradient: linear-gradient(135deg, #ff6b00, #ff8c00, #ffaa00);
-      --light-gray: #f8f9fa;
+      --light-gray: #f8f9f9;
       --medium-gray: #e9ecef;
       --dark-gray: #6c757d;
     }
@@ -21,15 +21,16 @@
       margin: 0;
       padding: 0;
       overflow-x: hidden;
-      font-family: 'Open Sans', sans-serif;
+      font-family: 'Arial', sans-serif;
       background-color: #f9f9f9;
     }
 
     .container {
-      max-width: 95%;
+      max-width: 800px;
       margin: 20px auto;
       padding: 20px;
       background: #fff;
+      border: 1px solid #ddd;
       border-radius: 10px;
       box-shadow: 0 5px 15px rgba(0,0,0,0.05);
       text-align: center;
@@ -46,14 +47,14 @@
     }
 
     p {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       color: var(--dark-gray);
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
     .feedback-section, .invoice-section {
       margin: 30px auto;
-      max-width: 600px;
+      max-width: 700px;
     }
 
     .emoji-rating {
@@ -120,38 +121,75 @@
     .invoice-section {
       display: none;
       text-align: left;
-      border: 1px solid var(--medium-gray);
       padding: 20px;
+      border: 1px solid var(--medium-gray);
       border-radius: 10px;
     }
 
-    .invoice-section h2 {
-      font-size: 1.8rem;
-      color: var(--primary-orange);
+    .invoice-header {
+      text-align: center;
       margin-bottom: 20px;
     }
 
-    .invoice-section p {
-      font-size: 1rem;
-      color: var(--dark-gray);
+    .invoice-header h2 {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin: 0;
+    }
+
+    .invoice-header p {
+      font-size: 0.9rem;
+      margin: 2px 0;
+      color: #000;
+    }
+
+    .invoice-details, .bill-to {
+      margin-bottom: 20px;
+    }
+
+    .invoice-details p, .bill-to p {
+      font-size: 0.9rem;
       margin: 5px 0;
+      color: #000;
+    }
+
+    .bill-to h3 {
+      font-size: 1.2rem;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: var(--primary-orange);
     }
 
     .invoice-section table {
       width: 100%;
       border-collapse: collapse;
       margin: 20px 0;
+      font-size: 0.9rem;
     }
 
     .invoice-section th, .invoice-section td {
       padding: 10px;
-      border: 1px solid var(--medium-gray);
+      border: 1px solid #ddd;
       text-align: left;
     }
 
     .invoice-section th {
-      background: var(--spice-gradient);
-      color: white;
+      background: #f9f9f9;
+      font-weight: bold;
+    }
+
+    .invoice-section .total-section {
+      margin-top: 20px;
+      text-align: right;
+    }
+
+    .invoice-section .total-section p {
+      font-size: 0.9rem;
+      margin: 5px 0;
+    }
+
+    .invoice-section .total-section p strong {
+      font-weight: bold;
     }
 
     .animate-fadeIn {
@@ -176,11 +214,15 @@
         margin: 10px;
         padding: 15px;
       }
+
+      .invoice-section table {
+        font-size: 0.8rem;
+      }
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
-    const API_BASE_URL = 'https://aromahut-1.onrender.com'; // Update this to your actual API base URL
+    const API_BASE_URL = 'https://aromahut-1.onrender.com';
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -248,30 +290,79 @@
         }
 
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+        const doc = new jsPDF({ unit: 'px', format: 'a4' });
 
-        doc.setFontSize(20);
-        doc.text('AromaHut Invoice', 20, 20);
+        // Header
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Spice World Enterprises', 210, 40, { align: 'center' });
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('No. 45, Spice Lane, Salem - 838007, Tamil Nadu, India', 210, 55, { align: 'center' });
+        doc.text('GSTIN: 33ABCDE123FIZ5 | Phone: +91-98765-43210 | Email: sales@spiceworld.com', 210, 65, { align: 'center' });
 
+        // Invoice Details
         doc.setFontSize(12);
-        doc.text(`Invoice Date: ${new Date().toLocaleString()}`, 20, 30);
-        doc.text(`Customer Name: ${orderData.buyer.name}`, 20, 40);
-        doc.text(`Email: ${orderData.buyer.email}`, 20, 50);
-        doc.text(`Phone: ${orderData.buyer.phone}`, 20, 60);
-        doc.text(`Address: ${orderData.buyer.address}`, 20, 70);
-        doc.text(`Order ID: ${orderData.id}`, 20, 80);
-        doc.text(`Payment ID: ${orderData.paymentId}`, 20, 90);
+        doc.text(`Invoice No: IN:${new Date().getFullYear()}-${orderData.id.slice(-4)}`, 40, 90);
+        doc.text(`Date: ${new Date().toLocaleDateString()}`, 40, 100);
 
-        doc.text('Items:', 20, 100);
-        let y = 110;
+        // Bill To
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Bill To:', 40, 120);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.text(orderData.buyer.name.toUpperCase(), 40, 135);
+        doc.text(orderData.buyer.address.toUpperCase(), 40, 145);
+        doc.text('GSTIN: 33WXXYZ5678KIZ9', 40, 155);
+        doc.text(`Phone: ${orderData.buyer.phone}`, 40, 165);
+        doc.text(`Email: ${orderData.buyer.email}`, 40, 175);
+
+        // Items Table
+        const tableTop = 200;
+        const itemCodeX = 40;
+        const descriptionX = 80;
+        const weightX = 220;
+        const quantityX = 270;
+        const priceX = 320;
+        const totalX = 360;
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Item Code', itemCodeX, tableTop);
+        doc.text('Description', descriptionX, tableTop);
+        doc.text('Weight', weightX, tableTop);
+        doc.text('Quantity', quantityX, tableTop);
+        doc.text('Price', priceX, tableTop);
+        doc.text('Total', totalX, tableTop);
+        doc.setLineWidth(0.5);
+        doc.line(40, tableTop + 5, 400, tableTop + 5);
+
+        let y = tableTop + 15;
+        let totalAmount = 0;
         orderData.items.forEach((item, index) => {
-          doc.text(`${index + 1}. ${item.name} (Qty: ${item.quantity}) - ₹${item.price}`, 20, y);
-          y += 10;
+          const itemTotal = item.price * item.quantity;
+          totalAmount += itemTotal;
+          doc.setFont('helvetica', 'normal');
+          doc.text(`ITEM${index + 1}`, itemCodeX, y);
+          doc.text(item.name, descriptionX, y);
+          doc.text(item.weight || '-', weightX, y);
+          doc.text(item.quantity.toString(), quantityX, y);
+          doc.text(`₹${item.price.toFixed(2)}`, priceX, y);
+          doc.text(`₹${itemTotal.toFixed(2)}`, totalX, y);
+          y += 15;
         });
 
-        doc.text(`Total Amount: ₹${orderData.amount / 100}`, 20, y + 10);
+        // Shipping and Total
+        totalAmount += 1.00;
+        doc.line(40, y, 400, y);
+        doc.text('Shipping', descriptionX, y + 10);
+        doc.text('₹1.00', totalX, y + 10);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Total', descriptionX, y + 25);
+        doc.text(`₹${totalAmount.toFixed(2)}`, totalX, y + 25);
 
-        doc.save(`AromaHut_Invoice_${orderData.id}.pdf`);
+        doc.save(`Invoice_${orderData.id}.pdf`);
 
         // Redirect to homepage after download
         setTimeout(() => {
@@ -293,33 +384,34 @@
         } catch (error) {
           console.error('Error fetching order details:', error);
           alert('Failed to fetch order details. You can still download the invoice or contact support.');
-        } finally {
-          // Don't show invoice until feedback is submitted or skipped
         }
       }
 
       function populateInvoice(data) {
-        document.getElementById('invoiceDate').textContent = new Date().toLocaleString();
+        document.getElementById('invoiceDate').textContent = new Date().toLocaleDateString();
+       
         document.getElementById('customerName').textContent = data.buyer.name.toUpperCase();
         document.getElementById('customerEmail').textContent = data.buyer.email;
         document.getElementById('customerPhone').textContent = data.buyer.phone;
         document.getElementById('customerAddress').textContent = data.buyer.address.toUpperCase();
-        document.getElementById('orderId').textContent = data.id;
+        document.getElementById('orderId').textContent = `IN:${new Date().getFullYear()}-${data.id.slice(-4)}`;
         document.getElementById('paymentId').textContent = data.paymentId;
 
         const itemsTable = document.getElementById('invoiceItems');
-        data.items.forEach(item => {
+        data.items.forEach((item, index) => {
           const row = document.createElement('tr');
           row.innerHTML = `
+            <td>ITEM${index + 1}</td>
             <td>${item.name}</td>
+            <td>${item.weight || '-'}</td>
             <td>${item.quantity}</td>
-            <td>₹${item.price}</td>
-            <td>₹${item.price * item.quantity}</td>
+            <td>₹${item.price.toFixed(2)}</td>
+            <td>₹${(item.price * item.quantity).toFixed(2)}</td>
           `;
           itemsTable.appendChild(row);
         });
 
-        document.getElementById('totalAmount').textContent = `₹${data.amount / 100}`;
+        document.getElementById('totalAmount').textContent = `₹${(data.amount / 100).toFixed(2)}`;
       }
     });
   </script>
@@ -327,7 +419,7 @@
 <body>
   <div class="container animate-fadeIn">
     <h1>Thank You for Your Purchase!</h1>
-    <p>We appreciate your business with AromaHut. Your order has been successfully placed.</p>
+    <p>We appreciate your business with Spice World Enterprises. Your order has been successfully placed.</p>
 
     <div class="feedback-section">
       <h2>We'd Love Your Feedback!</h2>
@@ -336,7 +428,7 @@
         <i class="fas fa-frown" data-rating="1"></i>
         <i class="fas fa-meh" data-rating="2"></i>
         <i class="fas fa-smile" data-rating="3"></i>
-        <i class="fas fa-grin" data-rating="4"></i>
+        <i class="fas fa-grin" data sphincter-rating="4"></i>
         <i class="fas fa-laugh" data-rating="5"></i>
       </div>
       <textarea id="comment" placeholder="Share your thoughts..."></textarea>
@@ -345,26 +437,40 @@
     </div>
 
     <div class="invoice-section">
-      <h2>Your Invoice</h2>
-      <p><strong>Date & Time:</strong> <span id="invoiceDate"></span></p>
-      <p><strong>Customer Name:</strong> <span id="customerName"></span></p>
-      <p><strong>Email:</strong> <span id="customerEmail"></span></p>
-      <p><strong>Phone:</strong> <span id="customerPhone"></span></p>
-      <p><strong>Shipping To:</strong> <span id="customerAddress"></span></p>
-      <p><strong>Order ID:</strong> <span id="orderId"></span></p>
-      <p><strong>Payment ID:</strong> <span id="paymentId"></span></p>
+      <div class="invoice-header">
+        <h2>Spice World Enterprises</h2>
+        <p>No. 45, Spice Lane, Salem - 838007, Tamil Nadu, India</p>
+        <p>GSTIN: 33ABCDE123FIZ5 | Phone: +91-98765-43210 | Email: sales@spiceworld.com</p>
+      </div>
+      <div class="invoice-details">
+        <p><strong>Invoice No:</strong> <span id="orderId"></span></p>
+        <p><strong>Date:</strong> <span id="invoiceDate"></span></p>
+      </div>
+      <div class="bill-to">
+        <h3>Bill To:</h3>
+        <p><strong>Name:</strong> <span id="customerName"></span></p>
+        <p><strong>Address:</strong> <span id="customerAddress"></span></p>
+        <p><strong>GSTIN:</strong> 33WXXYZ5678KIZ9</p>
+        <p><strong>Email:</strong> <span id="customerEmail"></span></p>
+        <p><strong>Phone:</strong> <span id="customerPhone"></span></p>
+      </div>
       <table>
         <thead>
           <tr>
-            <th>Item</th>
+            <th>Item Code</th>
+            <th>Description</th>
+            <th>Weight</th>
             <th>Quantity</th>
             <th>Price</th>
-            <th>Total</th>
+           37<th>Total</th>
           </tr>
         </thead>
         <tbody id="invoiceItems"></tbody>
       </table>
-      <p><strong>Total Amount:</strong> <span id="totalAmount"></span></p>
+      <div class="total-section">
+        <p>Shipping: ₹1.00</p>
+        <p><strong>Total Amount:</strong> <span id="totalAmount"></span></p>
+      </div>
       <button id="downloadInvoice" class="btn btn-primary">Download Invoice as PDF</button>
     </div>
   </div>
