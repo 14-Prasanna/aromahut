@@ -23,7 +23,7 @@ app.use(rateLimit({
 // Hardcoded environment variables
 const MONGO_URI = 'mongodb+srv://prasannavenkatesh652:6qRFqpH3RX9v2yaF@aromahut-cluster0.au6z4ri.mongodb.net/?retryWrites=true&w=majority&appName=aromahut-Cluster0';
 const EMAIL_USER = 'aromahut24@gmail.com'; // Corrected typo in email
-const EMAIL_PASS = 'yqbu qghn rdnx atvd';
+const EMAIL_PASS = 'zrbhuuokrhqegyol';
 const RAZORPAY_KEY_ID = 'rzp_live_0jmA0pn1TKRzf7';
 const RAZORPAY_KEY_SECRET = 'PwxPr4abPB4jDgz4AJjRUiQ6';
 const PORT = 5000;
