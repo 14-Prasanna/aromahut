@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const express = require('express');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
@@ -8,30 +6,33 @@ const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
+const PDFDocument = require('pdfkit');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 
 // Middleware
 app.use(express.json());
-app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
+app.use(cors({ origin: '*' }));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100, // Limit each IP to 100 requests
 }));
 
-// Validate environment variables
-const requiredEnvVars = ['MONGO_URI', 'EMAIL_USER', 'EMAIL_PASS'];
-const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-if (missingEnvVars.length) {
-  console.error(`❌ Missing environment variables: ${missingEnvVars.join(', ')}`);
-  process.exit(1);
-}
+// Hardcoded environment variables
+const MONGO_URI = 'mongodb+srv://prasannavenkatesh652:6qRFqpH3RX9v2yaF@aromahut-cluster0.au6z4ri.mongodb.net/?retryWrites=true&w=majority&appName=aromahut-Cluster0';
+const EMAIL_USER = 'aromahut24@gmail.com'; // Corrected typo in email
+const EMAIL_PASS = 'yqbu qghn rdnx atvd';
+const RAZORPAY_KEY_ID = 'rzp_live_0jmA0pn1TKRzf7';
+const RAZORPAY_KEY_SECRET = 'PwxPr4abPB4jDgz4AJjRUiQ6';
+const PORT = 5000;
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_URI, {
+mongoose.connect(MONGO_URI, {
   serverSelectionTimeoutMS: 5000,
 })
-  .then(() => {})
+  .then(() => console.log('✅ MongoDB Connected'))
   .catch(err => {
     console.error('❌ MongoDB Connection Error:', err.message);
     process.exit(1);
@@ -69,15 +70,15 @@ const Feedback = mongoose.model('Feedback', feedbackSchema);
 
 // Razorpay Initialization
 const razorpay = new Razorpay({
-  key_id: 'rzp_live_0jmA0pn1TKRzf7',
-  key_secret: 'PwxPr4abPB4jDgz4AJjRUiQ6',
+  key_id: RAZORPAY_KEY_ID,
+  key_secret: RAZORPAY_KEY_SECRET,
 });
 
 // Test Email Endpoint
 app.get('/test-email', async (req, res) => {
   try {
     await sendOrderEmail({
-      buyerEmail: process.env.EMAIL_USER,
+      buyerEmail: EMAIL_USER,
       buyerName: 'Test User',
       buyerAddress: '123 Test Street, Test City, 123456',
       items: [{ productName: 'Test Product', productPrice: 100, productQuantity: 1 }],
@@ -165,7 +166,7 @@ app.post('/verify-payment', async (req, res) => {
   }
 
   // Verify Razorpay signature
-  const hmac = crypto.createHmac('sha256', 'PwxPr4abPB4jDgz4AJjRUiQ6');
+  const hmac = crypto.createHmac('sha256', RAZORPAY_KEY_SECRET);
   hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
   const generatedSignature = hmac.digest('hex');
 
@@ -205,15 +206,171 @@ app.post('/verify-payment', async (req, res) => {
     const order = new Order(orderData);
     await order.save();
 
-    // Send confirmation email
-    await sendOrderEmail(order);
+    // Generate invoice PDF
+    const invoicePath = await generateInvoicePDF(order);
 
-    return res.json({ status: 'success', message: 'Payment verified, order saved, and email sent!' });
+    // Send confirmation email with invoice attachment
+    await sendOrderEmail(order, invoicePath);
+
+    return res.json({ status: 'success', message: 'Payment verified, order saved, invoice generated, and email sent!' });
   } catch (error) {
     console.error('Error processing payment:', error.message, error.stack);
     return res.status(500).json({ status: 'failed', error: 'Server error', details: error.message });
   }
 });
+
+// Generate Invoice PDF
+async function generateInvoicePDF(order) {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    const invoicePath = path.join(__dirname, `invoices/invoice_${order.razorpayOrderId}.pdf`);
+    
+    // Ensure invoices directory exists
+    const invoiceDir = path.join(__dirname, 'invoices');
+    if (!fs.existsSync(invoiceDir)) {
+      fs.mkdirSync(invoiceDir);
+    }
+
+    const stream = fs.createWriteStream(invoicePath);
+    doc.pipe(stream);
+
+    // Header
+    doc.fontSize(16).text('Spice World Enterprises', { align: 'center' });
+    doc.fontSize(10).text('No. 45, Spice Lane, Salem - 838007, Tamil Nadu, India', { align: 'center' });
+    doc.text('GSTIN: 33ABCDE123FIZ5 | Phone: +91-98765-43210 | Email: sales@spiceworld.com', { align: 'center' });
+    doc.moveDown();
+
+    // Invoice Details
+    doc.fontSize(12).text(`Invoice No: IN:${order.createdAt.getFullYear()}-${order.razorpayOrderId.slice(-4)}`, { align: 'left' });
+    doc.text(`Date: ${order.createdAt.toLocaleDateString()}`, { align: 'left' });
+    doc.moveDown();
+
+    // Bill To
+    doc.fontSize(12).text('Bill To:', { underline: true });
+    doc.fontSize(10).text(order.buyerName);
+    doc.text(`${order.buyerAddress}, ${order.buyerTown}, ${order.buyerPostalCode}`);
+    doc.text(`GSTIN: 33WXXYZ5678KIZ9`);
+    doc.text(`Phone: ${order.buyerPhone}`);
+    doc.text(`Email: ${order.buyerEmail}`);
+    doc.moveDown();
+
+    // Items Table
+    doc.fontSize(10);
+    const tableTop = doc.y + 10;
+    const itemCodeX = 50;
+    const descriptionX = 100;
+    const weightX = 250;
+    const quantityX = 300;
+    const priceX = 350;
+    const totalX = 400;
+
+    // Table Headers
+    doc.text('Item Code', itemCodeX, tableTop, { bold: true });
+    doc.text('Description', descriptionX, tableTop, { bold: true });
+    doc.text('Weight', weightX, tableTop, { bold: true });
+    doc.text('Quantity', quantityX, tableTop, { bold: true });
+    doc.text('Price', priceX, tableTop, { bold: true });
+    doc.text('Total', totalX, tableTop, { bold: true });
+    doc.moveTo(50, tableTop + 15).lineTo(550, tableTop + 15).stroke();
+
+    // Table Rows
+    let y = tableTop + 25;
+    let totalAmount = 0;
+    order.items.forEach((item, index) => {
+      const itemTotal = item.productPrice * item.productQuantity;
+      totalAmount += itemTotal;
+      doc.text(`ITEM${index + 1}`, itemCodeX, y);
+      doc.text(item.productName, descriptionX, y);
+      doc.text(item.productWeight || '-', weightX, y);
+      doc.text(item.productQuantity, quantityX, y);
+      doc.text(`₹${item.productPrice.toFixed(2)}`, priceX, y);
+      doc.text(`₹${itemTotal.toFixed(2)}`, totalX, y);
+      y += 20;
+    });
+
+    // Shipping and Total
+    totalAmount += 1.00; // Add shipping
+    doc.moveTo(50, y).lineTo(550, y).stroke();
+    doc.text('Shipping', descriptionX, y + 10);
+    doc.text('₹1.00', totalX, y + 10);
+    doc.text('Total', descriptionX, y + 30, { bold: true });
+    doc.text(`₹${totalAmount.toFixed(2)}`, totalX, y + 30, { bold: true });
+
+    doc.end();
+
+    stream.on('finish', () => resolve(invoicePath));
+    stream.on('error', (err) => reject(err));
+  });
+}
+
+// Send Order Confirmation Email with Invoice Attachment
+async function sendOrderEmail(order, invoicePath) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: EMAIL_USER,
+        pass: EMAIL_PASS,
+      },
+    });
+
+    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00; // Include shipping
+
+    const itemsHtml = order.items.map(item => `
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;">${sanitizeHtml(item.productName)}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${item.productWeight || '-'}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${item.productQuantity}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">₹${item.productPrice.toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    const mailOptions = {
+      from: EMAIL_USER,
+      to: order.buyerEmail,
+      subject: 'Thank You for Your Purchase from Spice World Enterprises!',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd;">
+          <h2 style="color: #ff6b00;">Order Confirmation</h2>
+          <p>Dear ${sanitizeHtml(order.buyerName.charAt(0).toUpperCase() + order.buyerName.slice(1))}</p>
+          <p>Thank you for shopping with Spice World Enterprises! Your order has been successfully placed.</p>
+          <h3>Order Details</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background-color: #f9f9f9;">
+                <th style="padding: 8px; border: 1px solid #ddd;">Product</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Weight</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Quantity</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+          <p style="margin-top: 20px;"><strong>Total (including ₹1.00 shipping):</strong> ₹${totalAmount.toFixed(2)}</p>
+          <h3>Shipping To</h3>
+          <p>${sanitizeHtml(order.buyerName.toUpperCase())}</p>
+          <p>${sanitizeHtml([order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', ').toUpperCase())}</p>
+          <p>We’ll notify you once your order has shipped. For any questions, contact us at ${EMAIL_USER}.</p>
+          <p>Best regards,<br>Spice World Enterprises Team</p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: `invoice_${order.razorpayOrderId}.pdf`,
+          path: invoicePath,
+          contentType: 'application/pdf',
+        },
+      ],
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Email Sending Error:', error.message, error.stack);
+    throw error;
+  }
+}
 
 // Submit Feedback Endpoint
 app.post('/submit-feedback', async (req, res) => {
@@ -290,68 +447,6 @@ app.get('/get-order', async (req, res) => {
   }
 });
 
-// Send Order Confirmation Email
-async function sendOrderEmail(order) {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00; // Include shipping
-
-    const itemsHtml = order.items.map(item => `
-      <tr>
-        <td style="padding: 8px; border: 1px solid #ddd;">${sanitizeHtml(item.productName)}</td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${item.productWeight || '-'}</td>
-        <td style="padding: 8px; border: 1px solid #ddd;">${item.productQuantity}</td>
-        <td style="padding: 8px; border: 1px solid #ddd;">₹${item.productPrice.toFixed(2)}</td>
-      </tr>
-    `).join('');
-
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: order.buyerEmail,
-      subject: 'Thank You for Your Purchase from AromaHut!',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd;">
-          <h2 style="color: #ff6b00;">Order Confirmation</h2>
-          <p>Dear ${sanitizeHtml(order.buyerName.charAt(0).toUpperCase() + order.buyerName.slice(1))}</p>
-          <p>Thank you for shopping with AromaHut! Your order has been successfully placed.</p>
-          <h3>Order Details</h3>
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="background-color: #f9f9f9;">
-                <th style="padding: 8px; border: 1px solid #ddd;">Product</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Weight</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Quantity</th>
-                <th style="padding: 8px; border: 1px solid #ddd;">Price</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${itemsHtml}
-            </tbody>
-          </table>
-          <p style="margin-top: 20px;"><strong>Total (including ₹1.00 shipping):</strong> ₹${totalAmount.toFixed(2)}</p>
-          <h3>Shipping To</h3>
-          <p>${sanitizeHtml(order.buyerName.toUpperCase())}</p>
-          <p>${sanitizeHtml([order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', ').toUpperCase())}</p>
-          <p>We’ll notify you once your order has shipped. For any questions, contact us at ${process.env.EMAIL_USER}.</p>
-          <p>Best regards,<br>AromaHut Team</p>
-        </div>
-      `,
-    };
-
-    await transporter.sendMail(mailOptions);
-  } catch (error) {
-    console.error('Email Sending Error:', error.message, error.stack);
-    throw error;
-  }
-}
-
 // Error Handling Middleware
 app.use((err, req, res, next) => {
   console.error('Unhandled Error:', err.message, err.stack);
@@ -359,7 +454,6 @@ app.use((err, req, res, next) => {
 });
 
 // Start Server
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
