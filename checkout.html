@@ -1202,10 +1202,10 @@ async function processPayment() {
         }
 
         const order = await response.json();
-        console.log('Order created:', order);
+      
 
         const options = {
-            key: 'rzp_test_2pt2beElIhpZ8K',
+            key: 'rzp_live_adGv4HqiAU33pO',
             amount: order.amount,
             currency: 'INR',
             name: 'Aromahut',
