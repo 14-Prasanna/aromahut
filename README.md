@@ -51,7 +51,7 @@ aromahut/
 ├── server.js          # Express backend with Razorpay, Nodemailer
 ├── package.json
 └── README.md
-
+```
 
 🚀 Run Locally
 # Open in browser (no build needed)
