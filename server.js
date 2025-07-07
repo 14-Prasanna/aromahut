@@ -28,7 +28,7 @@ const io = new Server(server, {
 app.use(express.json());
 
 app.use(cors({
-  origin: 'https://www.aromahut.in/',
+  origin: 'https://www.aromahut.in',
 }));
 
 app.use(rateLimit({
