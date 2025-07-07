@@ -16,16 +16,21 @@ const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || '*',
+    origin: 'https://www.aromahut.in/',
     methods: ['GET', 'POST'],
   },
 });
 
 // Middleware
 app.use(express.json());
-app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
+
+app.use(cors({
+  origin: 'https://www.aromahut.in/',
+}));
+
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
