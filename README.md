@@ -53,7 +53,8 @@ aromahut/
 └── README.md
 ```
 
-🚀** Run Locally**
+## 🚀Run Locally
+
 Frontend:
 # Open in browser (no build needed)
     1. index.html
@@ -64,7 +65,7 @@ Backend:
 # Start server
     2. node server.js
 
-**🎯 Project Purpose **
+## 🎯 Project Purpose 
 This project showcases:
 
 My ability to build real-world, full-stack applications
@@ -73,11 +74,12 @@ Integration of payment APIs, PDF generation, and email logic
 
 Clean frontend design and performance-optimized HTML
 
-# 🙋‍♂️ Developed By 
 ---
+# 🙋‍♂️ Developed By 
 # Prasanna Venkatesh K
 # Mohan Raj S
 ---
+
 # Frontend Web Developer | Passionate about clean code & real-world use cases
 https://prasannavenkateshportfolio14.netlify.app/
 https://mohanxz.github.io/
