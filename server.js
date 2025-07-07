@@ -19,7 +19,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: 'https://www.aromahut.in/',
+    origin: 'https://www.aromahut.in',
     methods: ['GET', 'POST'],
   },
 });
