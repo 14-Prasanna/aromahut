@@ -54,8 +54,8 @@ aromahut/
 ```
 
 🚀** Run Locally**
-# Open in browser (no build needed)
 Frontend:
+# Open in browser (no build needed)
     1. index.html
 
 Backend:
@@ -73,9 +73,11 @@ Integration of payment APIs, PDF generation, and email logic
 
 Clean frontend design and performance-optimized HTML
 
-**🙋‍♂️ Developed By **
+# 🙋‍♂️ Developed By 
+---
 # Prasanna Venkatesh K
 # Mohan Raj S
+---
 # Frontend Web Developer | Passionate about clean code & real-world use cases
 https://prasannavenkateshportfolio14.netlify.app/
 https://mohanxz.github.io/
