@@ -592,6 +592,11 @@ app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
     // Pipe PDF to response
     doc.pipe(res);
 
+    // Add logo to top-left corner
+    const logoPath = path.join(__dirname, 'public', 'img', 'aromahutTitleIcon.png');
+    doc.image(logoPath, 50, 50, { width: 80 });
+
+
     // Fonts and styling
     doc.font('Helvetica');
 
