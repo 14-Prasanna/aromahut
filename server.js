@@ -36,13 +36,6 @@ app.use(rateLimit({
   max: 100,
 }));
 
-const requiredEnvVars = ['MONGO_URI', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'EMAIL_USER', 'EMAIL_PASS', 'JWT_SECRET'];
-const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
-if (missingEnvVars.length) {
-  console.error(`❌ Missing environment variables: ${missingEnvVars.join(', ')}`);
-  process.exit(1);
-}
-
 mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 5000,
 })
@@ -347,7 +340,7 @@ cron.schedule('*/10 * * * *', async () => {
 app.get('/test-email', async (req, res) => {
   try {
     await sendOrderEmail({
-      buyerEmail: process.env.EMAIL_USER,
+      buyerEmail: 'aromahut24@gmail.com',
       buyerName: 'Test User',
       buyerAddress: '123 Test Street, Test City, 123456',
       items: [{ productName: 'Test Product', productPrice: 100, productQuantity: 1 }],
@@ -522,8 +515,8 @@ async function sendOrderEmail(order) {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: 'aromahut24@gmail.com',
+        pass: 'zrbh uuok rhqe gyoi',
       },
     });
     const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
@@ -536,7 +529,7 @@ async function sendOrderEmail(order) {
       </tr>
     `).join('');
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: 'aromahut24@gmail.com',
       to: order.buyerEmail,
       subject: 'Thank You for Your Purchase from AromaHut!',
       html: `
@@ -562,7 +555,7 @@ async function sendOrderEmail(order) {
           <h3>Shipping To</h3>
           <p>${sanitizeHtml(order.buyerName.toUpperCase())}</p>
           <p>${sanitizeHtml([order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', ').toUpperCase())}</p>
-          <p>We’ll notify you once your order has shipped. For any questions, contact us at ${process.env.EMAIL_USER}.</p>
+          <p>We’ll notify you once your order has shipped. For any questions, contact us at aromahut24@gmail.com.</p>
           <p>Best regards,<br>AromaHut Team</p>
         </div>
       `,
@@ -595,7 +588,6 @@ app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
     // Add logo to top-left corner
     const logoPath = path.join(__dirname, 'public', 'img', 'aromahutTitleIcon.png');
     doc.image(logoPath, 50, 50, { width: 80 });
-
 
     // Fonts and styling
     doc.font('Helvetica');
