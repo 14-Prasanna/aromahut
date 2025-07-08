@@ -1,42 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 
-    <head>
-        <meta charset="utf-8">
-        <title>Aromahut - Cart</title>
-        <meta content="width=device-width, initial-scale=1.0" name="viewport">
-        <meta content="" name="keywords">
-        <meta content="" name="description">
+<head>
+    <meta charset="utf-8">
+    <title>Aromahut - Cart</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="" name="keywords">
+    <meta content="" name="description">
 
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-
-        <!-- Google Web Fonts -->
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Raleway:wght@600;800&display=swap" rel="stylesheet"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
 
-        <!-- Icon Font Stylesheet -->
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
-
-        <!-- Libraries Stylesheet -->
-        <link href="lib/lightbox/css/lightbox.min.css" rel="stylesheet">
-        <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
-
-<link rel="icon" href="/img/aromahutTitleIcon.png" type="image/png">
-
-        <!-- Customized Bootstrap Stylesheet -->
-        <link href="css/bootstrap.min.css" rel="stylesheet">
-
-        <!-- Template Stylesheet -->
-        <link href="css/style.css" rel="stylesheet">
+    <!-- Google Web Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Raleway:wght@600;800&display=swap" rel="stylesheet"> 
 
 
-        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- Icon Font Stylesheet -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
 
-    </head>
+    <!-- Libraries Stylesheet -->
+    <link href="lib/lightbox/css/lightbox.min.css" rel="stylesheet">
+    <link href="lib/owlcarousel/assets/owl.carousel.min.css" rel="stylesheet">
+
+    <link rel="icon" href="/img/aromahutTitleIcon.png" type="image/png">
+
+    <!-- Customized Bootstrap Stylesheet -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Template Stylesheet -->
+    <link href="css/style.css" rel="stylesheet">
+
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</head>
 <style>
     /* Add this to your CSS */
 body, html {
@@ -230,6 +230,7 @@ body {
         box-shadow: 0 5px 15px rgba(0,0,0,0.05);
         margin: 20px auto;
         max-width: 95%;
+        padding: 20px 0 !important;
     }
     
     .table-responsive {
@@ -274,6 +275,7 @@ body {
     .quantity-control {
         display: flex;
         align-items: center;
+        justify-content: center;
     }
     
     .quantity-btn {
@@ -386,7 +388,7 @@ body {
         margin-bottom: 20px;
     }
     
-    /* Responsive Adjustments */
+    /* Mobile responsive table styles */
     @media (max-width: 768px) {
         table.table thead {
             display: none;
@@ -397,6 +399,8 @@ body {
             margin-bottom: 20px;
             border: 1px solid var(--medium-gray);
             border-radius: 10px;
+            padding: 10px;
+            position: relative;
         }
         
         table.table td {
@@ -404,6 +408,8 @@ body {
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid var(--medium-gray);
+            padding: 10px 15px;
+            text-align: right;
         }
         
         table.table td:before {
@@ -411,10 +417,29 @@ body {
             font-weight: bold;
             margin-right: 15px;
             color: var(--dark-gray);
+            flex: 1;
+            text-align: left;
+        }
+        
+        table.table td:last-child {
+            border-bottom: none;
+            justify-content: center;
         }
         
         .quantity-control {
             justify-content: flex-end;
+            flex: 1;
+        }
+        
+        /* Remove button styling */
+        table.table td[data-label="Remove"] {
+            justify-content: center;
+        }
+        
+        /* Cart summary adjustments */
+        .col-sm-8.col-md-7.col-lg-6.col-xl-4 {
+            width: 100%;
+            margin-top: 20px;
         }
     }
 
@@ -536,10 +561,6 @@ body {
         </div>
         <!-- Spinner End -->
 
-
-     
-
-
     
 <div class="container-fluid" id="mainNavbar">
   <div class="container px-0">
@@ -586,22 +607,19 @@ body {
 </div>
 
     
- 
-
         <!-- Cart Page Start -->
         <div class="container-fluid py-5">
             <div class="container py-3">
-                <!-- Use Bootstrap's margin-start utility class to adjust the left margin -->
                 <div class="table-responsive">
                     <table class="table"> 
                         <thead>
                             <tr>
                                 <th>S.no</th>
-                                <th class="product-Name">Product Name</th>
-                                <th>Weight</th>
-                                <th>Quantity</th>
-                                <th>Price</th>
-                                <th>Remove</th>
+                                <th data-label="Product">Product</th>
+                                <th data-label="Weight">Weight</th>
+                                <th data-label="Qty">Quantity</th>
+                                <th data-label="Price">Price</th>
+                                <th data-label="Remove">Remove</th>
                             </tr>
                         </thead>
                         <tbody id="cart-items">
@@ -611,31 +629,31 @@ body {
                 </div>
             </div>
         </div>
-                <div class="row g-2 justify-content-end ">
-                    <div class="col-8"></div>
-                    <div class="col-sm-8 col-md-7 col-lg-6 col-xl-4">
-                        <div class="bg-light rounded">
-                            <div class="p-4">
-                                <h1 class="display-6 mb-4">Cart <span class="fw-normal">Total</span></h1>
-                                <div class="d-flex justify-content-between mb-4">
-                                    <h5 class="mb-0 me-4 text-dark">Subtotal:</h5>
-                                    <p class="mb-0 subtotal text-dark"></p>
-                                </div>
-                                <div class="d-flex justify-content-between">
-                                    <h5 class="mb-0 me-4 text-dark">Shipping</h5>
-                                    <div class="">
-                                        <p class="mb-0 shipping text-dark">₹1.00</p>
-                                    </div>
-                                </div>
+        <div class="row g-2 justify-content-end">
+            <div class="col-8"></div>
+            <div class="col-sm-8 col-md-7 col-lg-6 col-xl-4">
+                <div class="bg-light rounded">
+                    <div class="p-4">
+                        <h1 class="display-6 mb-4">Cart Total</h1>
+                        <div class="d-flex justify-content-between mb-4">
+                            <h5 class="mb-0 me-4 text-dark">Subtotal:</h5>
+                            <p class="mb-0 subtotal text-dark"></p>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <h5 class="mb-0 me-4 text-dark">Shipping</h5>
+                            <div class="">
+                                <p class="mb-0 shipping text-dark">₹1.00</p>
                             </div>
-                            <div class="py-4 mb-4 border-top border-bottom d-flex justify-content-between">
-                                <h5 class="mb-0 ps-4 me-4 text-dark">Total</h5>
-                                <p class="mb-0 pe-4 Total">₹00</p>
-                            </div>
-                            <button class="btn border-secondary rounded-pill px-4 py-3 text-light  text-uppercase mb-5 ms-4" type="button" onclick="location.href='checkout.html'" style="background-color: #1F75FE;">Proceed Checkout</button>
                         </div>
                     </div>
+                    <div class="py-4 mb-4 border-top border-bottom d-flex justify-content-between">
+                        <h5 class="mb-0 ps-4 me-4 text-dark">Total</h5>
+                        <p class="mb-0 pe-4 Total">₹00</p>
+                    </div>
+                    <button class="btn border-secondary rounded-pill px-4 py-3 text-light text-uppercase mb-5 ms-4" type="button" onclick="location.href='checkout.html'" style="background-color: #1F75FE;">Proceed Checkout</button>
                 </div>
+            </div>
+        </div>
         <!-- Cart Page End -->
 
 
@@ -707,6 +725,17 @@ body {
                 <p class=" mb-0" style="color: #ffffff;">&copy; 2024 Aromahut. All rights reserved.</p>
             </div>
             <div class="col-md-6 text-center text-md-end">
+<<<<<<< HEAD
+                 <p class=" mb-0">
+
+                        <span style="color: #ffffff;">Designed and Developed By </span> <a class="border-bottom "
+                            href="https://mohanxz.github.io/">Mohan Raj S</a> <span> & </span> <a class="border-bottom "
+                            href="https://prasannavenkateshportfolio14.netlify.app/">Prasanna Venkatesh K</a><h1></h1>
+
+                           
+
+                    </p>
+=======
                 <p class=" mb-0">
                     
                                               <span style="color: #ffffff;">Designed and Developed By </span> <a class="border-bottom "
@@ -715,14 +744,12 @@ body {
 
                         
                 </p>
+>>>>>>> 145008d596b2e67abba3977f57d15da592d77b13
             </div>
         </div>
     </div>
 </footer>
         <!-- Footer End -->
-
-
-
 
         <!-- Back to Top -->
         <a href="#" class="btn btn-primary border-3 border-primary rounded-circle back-to-top"><i class="fa fa-arrow-up"></i></a>   
@@ -736,14 +763,11 @@ body {
     <script src="lib/lightbox/js/lightbox.min.js"></script>
     <script src="lib/owlcarousel/owl.carousel.min.js"></script>
 
-
-    
-
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
 
     <script>
-  $(document).ready(function () {
+$(document).ready(function () {
     function updateCartItems() {
         // Retrieve the cart items from localStorage
         const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
@@ -752,52 +776,71 @@ body {
         if (cartContainer.length) {
             cartContainer.empty(); // Clear any existing items
 
+            if (cartItems.length === 0) {
+                cartContainer.append(`
+                    <tr>
+                        <td colspan="6" class="text-center py-5">
+                            <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">Your cart is empty</h4>
+                            <a href="index.html" class="btn btn-primary mt-3">Continue Shopping</a>
+                        </td>
+                    </tr>
+                `);
+                return;
+            }
+
             // Populate cart items
             cartItems.forEach((item, index) => {
                 item.pricePerUnit = item.pricePerUnit || parseFloat(item.price.replace('₹', '').trim());
 
-              const itemRow = $(`
-    <tr>
-        <td>${index + 1}</td>
-        <td>${item.name}</td>
-        <td>${item.weight}</td>
-        <td>
-            <div class="quantity-control">
-                <button onclick="changeQuantity(${index}, -1)">-</button>
-                <span id="quantity-${index}">${item.quantity || '1'}</span>
-                <button onclick="changeQuantity(${index}, 1)">+</button>
-            </div>
-        </td>
-        <td id="price-${index}">${item.price}</td>
-        <td><i class="fas fa-trash-alt" style='text-align:center' data-index="${index}"></i></td>
-    </tr>
-`);
+                const itemRow = $(`
+                    <tr class="text-dark">
+                        <td data-label="S.no">${index + 1}</td>
+                        <td data-label="Product">${item.name}</td>
+                        <td data-label="Weight">${item.weight}</td>
+                        <td data-label="Quantity">
+                            <div class="quantity-control">
+                                <button class="quantity-btn" onclick="changeQuantity(${index}, -1)">-</button>
+                                <span id="quantity-${index}">${item.quantity || '1'}</span>
+                                <button class="quantity-btn" onclick="changeQuantity(${index}, 1)">+</button>
+                            </div>
+                        </td>
+                        <td data-label="Price" id="price-${index}">₹${(item.pricePerUnit * (item.quantity || 1)).toFixed(2)}</td>
+                        <td data-label="Remove"><i class="fas fa-trash-alt remove-btn" data-index="${index}"></i></td>
+                    </tr>
+                `);
                 cartContainer.append(itemRow);
             });
 
             // Attach delete event listeners
             $('#cart-items').on('click', '.fa-trash-alt', function () {
                 const index = $(this).data('index');
-
-                // Retrieve the cart items from localStorage
-                const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-
-                // Remove the item from the cartItems array
-                cartItems.splice(index, 1);
-
-                // Update localStorage
-                localStorage.setItem('cartItems', JSON.stringify(cartItems));
-
-                // Update the cart display
-                updateCartItems();
-
-                // Update the subtotal and total
-                updateSubtotal();
-                updateTotal();
+                removeCartItem(index);
             });
         } else {
             console.error('Cart container element not found in the DOM');
         }
+    }
+
+    function removeCartItem(index) {
+        // Retrieve the cart items from localStorage
+        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+
+        // Remove the item from the cartItems array
+        cartItems.splice(index, 1);
+
+        // Update localStorage
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+
+        // Update the cart display
+        updateCartItems();
+
+        // Update the subtotal and total
+        updateSubtotal();
+        updateTotal();
+        
+        // Update cart count
+        updateCartCount();
     }
 
     function updateSubtotal() {
@@ -807,7 +850,7 @@ body {
         // Calculate the total price
         let total = 0;
         cartItems.forEach(item => {
-            const price = parseFloat(item.price.replace('₹', '')); // Remove the currency symbol and parse as float
+            const price = item.pricePerUnit || parseFloat(item.price.replace('₹', '')); 
             const quantity = item.quantity || 1;
             total += price * quantity;
         });
@@ -823,7 +866,7 @@ body {
         // Calculate the total price of cart items
         let total = 0;
         cartItems.forEach(item => {
-            const price = parseFloat(item.price.replace('₹', '')); 
+            const price = item.pricePerUnit || parseFloat(item.price.replace('₹', '')); 
             const quantity = item.quantity || 1; 
             total += price * quantity;
         });
@@ -839,27 +882,46 @@ body {
         $('.Total').text(`₹${total.toFixed(2)}`);
     }
 
+    function updateCartCount() {
+        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+        const totalItems = cartItems.reduce((total, item) => total + (item.quantity || 1), 0);
+        const cartCountElements = document.querySelectorAll('.cart-count');
+        
+        cartCountElements.forEach(element => {
+            element.textContent = totalItems;
+            // Add animation
+            element.classList.add('animate__animated', 'animate__bounceIn');
+            setTimeout(() => {
+                element.classList.remove('animate__animated', 'animate__bounceIn');
+            }, 1000);
+        });
+    }
+
     // Function to handle quantity changes
     window.changeQuantity = function(index, change) {
         // Retrieve the cart items from localStorage
         const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
 
         // Update the quantity
-        cartItems[index].quantity = (cartItems[index].quantity || 1) + change;
+        const newQuantity = (cartItems[index].quantity || 1) + change;
 
-        // Ensure quantity doesn't go below 1
-        if (cartItems[index].quantity < 1) {
-            cartItems[index].quantity = 1;
+        // If quantity reaches 0, remove the item
+        if (newQuantity < 1) {
+            removeCartItem(index);
+            return;
         }
+
+        // Update the quantity
+        cartItems[index].quantity = newQuantity;
 
         // Update localStorage
         localStorage.setItem('cartItems', JSON.stringify(cartItems));
 
         // Update the displayed quantity and price
-        $(`#quantity-${index}`).text(cartItems[index].quantity);
+        $(`#quantity-${index}`).text(newQuantity);
 
         const pricePerUnit = cartItems[index].pricePerUnit || parseFloat(cartItems[index].price.replace('₹', '').trim());
-        const newPrice = pricePerUnit * cartItems[index].quantity;
+        const newPrice = pricePerUnit * newQuantity;
 
         if (!isNaN(newPrice)) {
             $(`#price-${index}`).text(`₹${newPrice.toFixed(2)}`); 
@@ -870,15 +932,18 @@ body {
         // Update the subtotal and total
         updateSubtotal();
         updateTotal();
+        
+        // Update cart count
+        updateCartCount();
     };
 
     // Initialize cart items and totals on page load
     updateCartItems();
     updateSubtotal();
     updateTotal();
+    updateCartCount();
 });
 
-    
         // Initialize when DOM is loaded
         document.addEventListener('DOMContentLoaded', function() {
             // Set Masala tab as active by default
@@ -986,9 +1051,6 @@ body {
                 }, 1000);
             });
         }
-
-       
-
     </script>
     </body>
 </html>
