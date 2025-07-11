@@ -25,22 +25,6 @@
       background-color: #f9f9f9;
     }
 
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-      width: 8px;
-      height: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: #f1f1f1;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: #888;
-      border-radius: 4px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: #555;
-    }
-
     .container {
       max-width: 95%;
       margin: 20px auto;
@@ -171,7 +155,6 @@
     .invoice-logo {
       max-width: 120px;
       height: auto;
-      filter: grayscale(100%) contrast(120%);
     }
 
     .invoice-details {
@@ -223,22 +206,20 @@
       border-bottom: none;
     }
 
-    .shipping-fee {
+    .invoice-totals {
       text-align: right;
-      margin-top: 10px;
-      font-size: 1rem;
+      margin-top: 20px;
+      font-size: 1.1rem;
+    }
+
+    .invoice-totals p {
+      margin: 5px 0;
     }
 
     .invoice-total {
-      text-align: right;
-      margin-top: 10px;
-      font-size: 1.1rem;
       font-weight: bold;
-    }
-
-    .invoice-total span {
-      color: var(--primary-orange);
       font-size: 1.3rem;
+      color: var(--primary-orange);
     }
 
     .invoice-footer {
@@ -275,20 +256,6 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Mobile responsive table */
-    @media screen and (max-width: 600px) {
-      .invoice-section table {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-      }
-      
-      .invoice-section th, 
-      .invoice-section td {
-        min-width: 100px;
-      }
-    }
-
     @media (max-width: 576px) {
       h1 {
         font-size: 2rem;
@@ -320,7 +287,7 @@
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script>
-    const API_BASE_URL = 'https://aromahut-1.onrender.com';
+    const API_BASE_URL = 'https://aromahut-1.onrender.com'; // Update this to your actual API base URL
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -331,8 +298,6 @@
       if (orderId && paymentId) {
         fetchOrderDetails(orderId, paymentId);
       } else {
-        orderData = createDummyOrder();
-        populateInvoice(orderData);
         showInvoiceSection();
       }
 
@@ -392,24 +357,21 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Black and white invoice styling
-        doc.setDrawColor(0);
-        doc.setFillColor(0);
-        doc.setTextColor(0);
-        
-        // Add black and white logo to PDF
-        const logoWidth = 40;
-        const logoHeight = 20;
-        const logoX = 150;
-        const logoY = 10;
-        
-        // Create a simple black rectangle with white text as logo
-        doc.setFillColor(0);
-        doc.rect(logoX, logoY, logoWidth, logoHeight, 'F');
-        doc.setTextColor(255);
-        doc.setFontSize(14);
-        doc.text('AromaHut', logoX + logoWidth/2, logoY + logoHeight/2 + 3, { align: 'center' });
-        doc.setTextColor(0);
+        // Add logo (image instead of text)
+        const imgElement = document.getElementById('logo');
+        const canvas = document.createElement('canvas');
+        canvas.width = imgElement.width;
+        canvas.height = imgElement.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgElement, 0, 0);
+        const logoImg = canvas.toDataURL('img/aromahutlogo.png');
+
+        doc.addImage(logoImg, 'PNG', 150, 10, 40, 20); // x, y, width, height
+
+        doc.setFontSize(20);
+        doc.setTextColor(255, 107, 0);
+        doc.text('AromaHut', 160, 20);
+        doc.setTextColor(0, 0, 0);
         
         // Invoice title
         doc.setFontSize(16);
@@ -430,19 +392,17 @@
 
         // Items table header
         doc.setFontSize(12);
-        doc.setFillColor(100); // Gray background for header
+        doc.setTextColor(255, 255, 255);
+        doc.setFillColor(255, 107, 0);
         doc.rect(20, 90, 170, 10, 'F');
-        doc.setTextColor(255); // White text
         doc.text('Item', 22, 96);
         doc.text('Qty', 120, 96);
         doc.text('Price', 140, 96);
         doc.text('Total', 170, 96);
-        doc.setTextColor(0); // Black text
+        doc.setTextColor(0, 0, 0);
 
         // Items
         let y = 105;
-        let totalWeight = 0;
-        
         orderData.items.forEach((item, index) => {
           doc.setFontSize(10);
           doc.text(`${index + 1}. ${item.name}`, 22, y);
@@ -450,24 +410,22 @@
           doc.text(`Rs.${item.price}`, 140, y);
           doc.text(`Rs.${item.price * item.quantity}`, 170, y);
           y += 7;
-          
-          // Calculate total weight (assuming each item has a weight property)
-          if (item.weight) {
-            totalWeight += item.weight * item.quantity;
-          }
         });
 
-        // Shipping fee calculation
-        const shippingFee = calculateShippingFee(totalWeight);
-        doc.text(`Shipping Fee (${totalWeight.toFixed(2)} kg): Rs.${shippingFee}`, 140, y + 5);
-        
+        // Shipping fee
+        doc.setFontSize(10);
+        doc.text('Shipping Fee:', 140, y + 5);
+        doc.text(`Rs.${calculateShippingFee(orderData.items)}`, 170, y + 5);
+        y += 7;
+
         // Total
         doc.setFontSize(12);
-        doc.text(`Total Amount:`, 140, y + 15);
-        doc.text(`Rs.${(orderData.amount / 100) + shippingFee}`, 170, y + 15);
+        doc.text(`Total Amount:`, 140, y + 10);
+        doc.text(`Rs.${(orderData.amount / 100) + calculateShippingFee(orderData.items)}`, 170, y + 10);
 
         // Company information
         doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
         doc.text('AromaHut - Bringing authentic homemade flavors to your kitchen since 2010', 20, y + 30);
         doc.text('70/36, Thiruvenkadam Street, Gugai, Salem – 636006, Tamil Nadu', 20, y + 35);
         doc.text('Phone: +91 9443383538 | Email: aromahut24@gmail.com', 20, y + 40);
@@ -495,42 +453,20 @@
           populateInvoice(orderData);
         } catch (error) {
           console.error('Error fetching order details:', error);
-          orderData = createDummyOrder();
-          populateInvoice(orderData);
-          alert('Failed to fetch order details. Displaying sample invoice.');
+          alert('Failed to fetch order details. You can still download the invoice or contact support.');
+        } finally {
+          // Don't show invoice until feedback is submitted or skipped
         }
       }
 
-      function createDummyOrder() {
-        return {
-          id: 'AH-' + Math.floor(Math.random() * 1000000),
-          paymentId: 'pay_' + Math.random().toString(36).substr(2, 12),
-          amount: 150000, // in paise (1500.00)
-          buyer: {
-            name: 'John Doe',
-            email: 'john.doe@example.com',
-            phone: '+91 9876543210',
-            address: '123 Main Street, Chennai, Tamil Nadu - 600001'
-          },
-          items: [
-            { name: 'Premium Garam Masala', quantity: 2, price: 250, weight: 0.5 }, // weight in kg
-            { name: 'Sambar Powder', quantity: 3, price: 200, weight: 0.25 },
-            { name: 'Chicken Masala', quantity: 1, price: 300, weight: 0.3 }
-          ],
-          createdAt: new Date().toISOString()
-        };
-      }
-
-      function calculateShippingFee(totalWeight) {
-        // Shipping fee formula:
-        // - Each 1.1kg range costs Rs.40
-        // - 0-1.1kg: Rs.40
-        // - 1.2-2.1kg: Rs.80 (40*2)
-        // - 2.2-3.1kg: Rs.120 (40*3)
-        // - and so on...
-        if (totalWeight <= 0) return 0;
-        const ranges = Math.ceil((totalWeight + 0.1) / 1.1); // Adding 0.1 to handle edge cases
-        return ranges * 40;
+      function calculateShippingFee(items) {
+        // Calculate total weight (assuming each item has a weight property)
+        const totalWeight = items.reduce((sum, item) => sum + (item.weight || 0.1), 0);
+        
+        // Calculate shipping fee based on weight ranges
+        // Rs.40 for each 1.1kg range (0-1.1kg, 1.2-2.1kg, 2.2-3.1kg, etc.)
+        const shippingFee = Math.ceil((totalWeight + 0.1) / 1.1) * 40;
+        return shippingFee;
       }
 
       function populateInvoice(data) {
@@ -547,11 +483,7 @@
 
         // Items table
         const itemsTable = document.getElementById('invoiceItems');
-        itemsTable.innerHTML = '';
-        
-        let totalWeight = 0;
-        let subtotal = 0;
-        
+        itemsTable.innerHTML = ''; // Clear any existing rows
         data.items.forEach(item => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -561,24 +493,20 @@
             <td>Rs.${item.price * item.quantity}</td>
           `;
           itemsTable.appendChild(row);
-          
-          if (item.weight) {
-            totalWeight += item.weight * item.quantity;
-          }
-          subtotal += item.price * item.quantity;
         });
 
-        // Calculate and display shipping fee
-        const shippingFee = calculateShippingFee(totalWeight);
-        const shippingRow = document.createElement('tr');
-        shippingRow.innerHTML = `
-          <td colspan="3" style="text-align: right; font-weight: bold;">Shipping Fee (${totalWeight.toFixed(2)} kg)</td>
-          <td>Rs.${shippingFee}</td>
-        `;
-        itemsTable.appendChild(shippingRow);
+        // Calculate shipping fee
+        const shippingFee = calculateShippingFee(data.items);
+        const subtotal = data.amount / 100;
+        const total = subtotal + shippingFee;
 
-        // Total
-        document.getElementById('totalAmount').textContent = `Rs.${subtotal + shippingFee}`;
+        // Update totals section
+        const totalsDiv = document.querySelector('.invoice-totals');
+        totalsDiv.innerHTML = `
+          <p>Subtotal: Rs.${subtotal.toFixed(2)}</p>
+          <p>Shipping Fee: Rs.${shippingFee.toFixed(2)}</p>
+          <p class="invoice-total">Total Amount: Rs.${total.toFixed(2)}</p>
+        `;
       }
     });
   </script>
@@ -609,7 +537,7 @@
           <h2>INVOICE</h2>
           <p>Thank you for your purchase</p>
         </div>
-        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyMDAgMTAwIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjEwMCIgZmlsbD0iIzAwMCIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjZmZmIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMjQiPkFyb21hSHV0PC90ZXh0Pjwvc3ZnPg==" alt="AromaHut Logo" class="invoice-logo">
+        <img id="logo" src="img/aromahutlogo.png" alt="AromaHut Logo" class="invoice-logo">
       </div>
 
       <div class="invoice-details">
@@ -644,8 +572,8 @@
         <tbody id="invoiceItems"></tbody>
       </table>
 
-      <div class="invoice-total">
-        <p>Total Amount: <span id="totalAmount"></span></p>
+      <div class="invoice-totals">
+        <!-- Subtotal, shipping fee, and total will be populated here -->
       </div>
 
       <div class="company-info">
