@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Thank You - AromaHut</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
     :root {
       --primary-orange: #ff6b00;
@@ -53,7 +53,7 @@
 
     .feedback-section, .invoice-section {
       margin: 30px auto;
-      max-width: 700px;
+      max-width: 600px;
     }
 
     .emoji-rating {
@@ -122,57 +122,109 @@
       text-align: left;
       border: 1px solid var(--medium-gray);
       padding: 30px;
-      border-radius: 12px;
-      background-color: #fff;
-      box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+      border-radius: 10px;
+      background: white;
+      position: relative;
     }
 
-    .invoice-section h2 {
+    .invoice-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 30px;
+      border-bottom: 2px solid var(--primary-orange);
+      padding-bottom: 20px;
+    }
+
+    .invoice-title {
+      text-align: left;
+    }
+
+    .invoice-title h2 {
       font-size: 1.8rem;
       color: var(--primary-orange);
-      margin-bottom: 25px;
-      border-bottom: 2px solid var(--primary-orange);
-      padding-bottom: 10px;
+      margin: 0;
     }
 
-    .invoice-section p {
-      font-size: 1rem;
+    .invoice-title p {
+      font-size: 0.9rem;
       color: var(--dark-gray);
-      margin: 8px 0;
-      line-height: 1.6;
+      margin: 5px 0 0;
+    }
+
+    .invoice-logo {
+      max-width: 120px;
+      height: auto;
+    }
+
+    .invoice-details {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .invoice-details div {
+      flex: 1;
+      min-width: 200px;
+      margin-bottom: 15px;
+    }
+
+    .invoice-details h3 {
+      font-size: 1.1rem;
+      color: var(--primary-orange);
+      margin-bottom: 10px;
+    }
+
+    .invoice-details p {
+      font-size: 0.95rem;
+      color: var(--dark-gray);
+      margin: 5px 0;
     }
 
     .invoice-section table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 20px;
-    }
-
-    .invoice-section th, .invoice-section td {
-      padding: 12px;
-      border: 1px solid var(--medium-gray);
-      text-align: left;
+      margin: 25px 0;
+      font-size: 0.95rem;
     }
 
     .invoice-section th {
       background: var(--spice-gradient);
       color: white;
-      font-weight: 600;
+      padding: 12px 15px;
+      text-align: left;
     }
 
-    .invoice-section td:last-child, 
-    .invoice-section th:last-child {
+    .invoice-section td {
+      padding: 12px 15px;
+      border-bottom: 1px solid var(--medium-gray);
+      text-align: left;
+    }
+
+    .invoice-section tr:last-child td {
+      border-bottom: none;
+    }
+
+    .invoice-total {
       text-align: right;
-    }
-
-    #totalAmount {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: var(--primary-orange);
-    }
-
-    #downloadInvoice {
       margin-top: 20px;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .invoice-total span {
+      color: var(--primary-orange);
+      font-size: 1.3rem;
+    }
+
+    .invoice-footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid var(--medium-gray);
+      font-size: 0.9rem;
+      color: var(--dark-gray);
+      text-align: center;
     }
 
     .animate-fadeIn {
@@ -198,60 +250,24 @@
         padding: 15px;
       }
 
-      .invoice-section {
-        padding: 20px;
+      .invoice-header {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .invoice-title {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+
+      .invoice-details div {
+        min-width: 100%;
       }
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-</head>
-<body>
-  <div class="container animate-fadeIn">
-    <h1>Thank You for Your Purchase!</h1>
-    <p>We appreciate your business with AromaHut. Your order has been successfully placed.</p>
-
-    <div class="feedback-section">
-      <h2>We'd Love Your Feedback!</h2>
-      <p>How was your shopping experience?</p>
-      <div class="emoji-rating">
-        <i class="fas fa-frown" data-rating="1"></i>
-        <i class="fas fa-meh" data-rating="2"></i>
-        <i class="fas fa-smile" data-rating="3"></i>
-        <i class="fas fa-grin" data-rating="4"></i>
-        <i class="fas fa-laugh" data-rating="5"></i>
-      </div>
-      <textarea id="comment" placeholder="Share your thoughts..."></textarea>
-      <button id="submitFeedback" class="btn btn-primary">Submit Feedback</button>
-      <button id="skipFeedback" class="btn btn-secondary">Skip</button>
-    </div>
-
-    <div class="invoice-section">
-      <h2>Your Invoice</h2>
-      <p><strong>Date & Time:</strong> <span id="invoiceDate"></span></p>
-      <p><strong>Customer Name:</strong> <span id="customerName"></span></p>
-      <p><strong>Email:</strong> <span id="customerEmail"></span></p>
-      <p><strong>Phone:</strong> <span id="customerPhone"></span></p>
-      <p><strong>Shipping To:</strong> <span id="customerAddress"></span></p>
-      <p><strong>Order ID:</strong> <span id="orderId"></span></p>
-      <p><strong>Payment ID:</strong> <span id="paymentId"></span></p>
-      <table>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Quantity</th>
-            <th>Price</th>
-            <th>Total</th>
-          </tr>
-        </thead>
-        <tbody id="invoiceItems"></tbody>
-      </table>
-      <p><strong>Total Amount:</strong> <span id="totalAmount"></span></p>
-      <button id="downloadInvoice" class="btn btn-primary">Download Invoice as PDF</button>
-    </div>
-  </div>
-
   <script>
-    const API_BASE_URL = 'https://aromahut-1.onrender.com';
+    const API_BASE_URL = 'https://aromahut-1.onrender.com'; // Update this to your actual API base URL
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -265,6 +281,7 @@
         showInvoiceSection();
       }
 
+      // Emoji rating selection
       document.querySelectorAll('.emoji-rating i').forEach(emoji => {
         emoji.addEventListener('click', () => {
           document.querySelectorAll('.emoji-rating i').forEach(e => e.classList.remove('selected'));
@@ -272,6 +289,7 @@
         });
       });
 
+      // Submit feedback
       document.getElementById('submitFeedback').addEventListener('click', async () => {
         const rating = document.querySelector('.emoji-rating i.selected');
         const comment = document.getElementById('comment').value.trim();
@@ -304,10 +322,12 @@
         }
       });
 
+      // Skip feedback
       document.getElementById('skipFeedback').addEventListener('click', () => {
         showInvoiceSection();
       });
 
+      // Download PDF
       document.getElementById('downloadInvoice').addEventListener('click', () => {
         if (!orderData) {
           alert('Order details not available.');
@@ -317,29 +337,65 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
+        // Add logo (using text as placeholder - replace with actual image if available)
         doc.setFontSize(20);
-        doc.text('AromaHut Invoice', 20, 20);
+        doc.setTextColor(255, 107, 0);
+        doc.text('AromaHut', 160, 20);
+        doc.setTextColor(0, 0, 0);
+        
+        // Invoice title
+        doc.setFontSize(16);
+        doc.text('INVOICE', 20, 30);
 
+        // Invoice details
+        doc.setFontSize(10);
+        doc.text(`Invoice Date: ${new Date().toLocaleString()}`, 20, 40);
+        doc.text(`Invoice #: ${orderData.id}`, 20, 45);
+        
+        // Customer information
         doc.setFontSize(12);
-        doc.text(`Invoice Date: ${new Date().toLocaleString()}`, 20, 30);
-        doc.text(`Customer Name: ${orderData.buyer.name}`, 20, 40);
-        doc.text(`Email: ${orderData.buyer.email}`, 20, 50);
-        doc.text(`Phone: ${orderData.buyer.phone}`, 20, 60);
-        doc.text(`Address: ${orderData.buyer.address}`, 20, 70);
-        doc.text(`Order ID: ${orderData.id}`, 20, 80);
-        doc.text(`Payment ID: ${orderData.paymentId}`, 20, 90);
+        doc.text('Bill To:', 20, 60);
+        doc.text(`${orderData.buyer.name.toUpperCase()}`, 20, 65);
+        doc.text(`${orderData.buyer.address.toUpperCase()}`, 20, 70);
+        doc.text(`Phone: ${orderData.buyer.phone}`, 20, 75);
+        doc.text(`Email: ${orderData.buyer.email}`, 20, 80);
 
-        doc.text('Items:', 20, 100);
-        let y = 110;
+        // Items table header
+        doc.setFontSize(12);
+        doc.setTextColor(255, 255, 255);
+        doc.setFillColor(255, 107, 0);
+        doc.rect(20, 90, 170, 10, 'F');
+        doc.text('Item', 22, 96);
+        doc.text('Qty', 120, 96);
+        doc.text('Price', 140, 96);
+        doc.text('Total', 170, 96);
+        doc.setTextColor(0, 0, 0);
+
+        // Items
+        let y = 105;
         orderData.items.forEach((item, index) => {
-          doc.text(`${index + 1}. ${item.name} (Qty: ${item.quantity}) - ₹${item.price}`, 20, y);
-          y += 10;
+          doc.setFontSize(10);
+          doc.text(`${index + 1}. ${item.name}`, 22, y);
+          doc.text(`${item.quantity}`, 120, y);
+          doc.text(`₹${item.price}`, 140, y);
+          doc.text(`₹${item.price * item.quantity}`, 170, y);
+          y += 7;
         });
 
-        doc.text(`Total Amount: ₹${orderData.amount / 100}`, 20, y + 10);
+        // Total
+        doc.setFontSize(12);
+        doc.text(`Total Amount:`, 140, y + 10);
+        doc.text(`₹${orderData.amount / 100}`, 170, y + 10);
+
+        // Footer
+        doc.setFontSize(10);
+        doc.setTextColor(100, 100, 100);
+        doc.text('Thank you for your purchase!', 20, y + 30);
+        doc.text('AromaHut - Premium Spices & Herbs', 20, y + 35);
 
         doc.save(`AromaHut_Invoice_${orderData.id}.pdf`);
 
+        // Redirect to homepage after download
         setTimeout(() => {
           window.location.href = 'index.html';
         }, 1000);
@@ -359,20 +415,26 @@
         } catch (error) {
           console.error('Error fetching order details:', error);
           alert('Failed to fetch order details. You can still download the invoice or contact support.');
+        } finally {
+          // Don't show invoice until feedback is submitted or skipped
         }
       }
 
       function populateInvoice(data) {
+        // Invoice header
         document.getElementById('invoiceDate').textContent = new Date().toLocaleString();
+        document.getElementById('orderId').textContent = data.id;
+
+        // Customer details
         document.getElementById('customerName').textContent = data.buyer.name.toUpperCase();
         document.getElementById('customerEmail').textContent = data.buyer.email;
         document.getElementById('customerPhone').textContent = data.buyer.phone;
         document.getElementById('customerAddress').textContent = data.buyer.address.toUpperCase();
-        document.getElementById('orderId').textContent = data.id;
         document.getElementById('paymentId').textContent = data.paymentId;
 
+        // Items table
         const itemsTable = document.getElementById('invoiceItems');
-        itemsTable.innerHTML = '';
+        itemsTable.innerHTML = ''; // Clear any existing rows
         data.items.forEach(item => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -384,9 +446,84 @@
           itemsTable.appendChild(row);
         });
 
+        // Total
         document.getElementById('totalAmount').textContent = `₹${data.amount / 100}`;
       }
     });
   </script>
+</head>
+<body>
+  <div class="container animate-fadeIn">
+    <h1>Thank You for Your Purchase!</h1>
+    <p>We appreciate your business with AromaHut. Your order has been successfully placed.</p>
+
+    <div class="feedback-section">
+      <h2>We'd Love Your Feedback!</h2>
+      <p>How was your shopping experience?</p>
+      <div class="emoji-rating">
+        <i class="fas fa-frown" data-rating="1"></i>
+        <i class="fas fa-meh" data-rating="2"></i>
+        <i class="fas fa-smile" data-rating="3"></i>
+        <i class="fas fa-grin" data-rating="4"></i>
+        <i class="fas fa-laugh" data-rating="5"></i>
+      </div>
+      <textarea id="comment" placeholder="Share your thoughts..."></textarea>
+      <button id="submitFeedback" class="btn btn-primary">Submit Feedback</button>
+      <button id="skipFeedback" class="btn btn-secondary">Skip</button>
+    </div>
+
+    <div class="invoice-section">
+      <div class="invoice-header">
+        <div class="invoice-title">
+          <h2>INVOICE</h2>
+          <p>Thank you for your purchase</p>
+        </div>
+        <img src="https://via.placeholder.com/120x60?text=AromaHut" alt="AromaHut Logo" class="invoice-logo">
+      </div>
+
+      <div class="invoice-details">
+        <div>
+          <h3>Invoice Details</h3>
+          <p><strong>Date:</strong> <span id="invoiceDate"></span></p>
+          <p><strong>Invoice #:</strong> <span id="orderId"></span></p>
+        </div>
+        <div>
+          <h3>Bill To</h3>
+          <p><span id="customerName"></span></p>
+          <p><span id="customerAddress"></span></p>
+          <p><span id="customerPhone"></span></p>
+          <p><span id="customerEmail"></span></p>
+        </div>
+        <div>
+          <h3>Payment Details</h3>
+          <p><strong>Payment ID:</strong> <span id="paymentId"></span></p>
+          <p><strong>Payment Method:</strong> Online Payment</p>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item Description</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody id="invoiceItems"></tbody>
+      </table>
+
+      <div class="invoice-total">
+        <p>Total Amount: <span id="totalAmount"></span></p>
+      </div>
+
+      <div class="invoice-footer">
+        <p>Thank you for shopping with AromaHut. We appreciate your business!</p>
+        <p>For any questions, please contact support@aromahut.com</p>
+      </div>
+
+      <button id="downloadInvoice" class="btn btn-primary">Download Invoice as PDF</button>
+    </div>
+  </div>
 </body>
 </html>
