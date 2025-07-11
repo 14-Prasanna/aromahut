@@ -208,13 +208,24 @@ async function generateProfessionalInvoice(order, res) {
   const margin = doc.page.margins.left;
   const tableWidth = pageWidth;
 
-  // 1. Header
+  // Add AromaHut logo (assuming you have a logo.png in your project)
+  const logoPath = path.join(__dirname, 'logo.png');
+  if (fs.existsSync(logoPath)) {
+    doc.image(logoPath, margin + 400, 30, { width: 120, align: 'right' });
+  } else {
+    console.warn('Logo file not found at:', logoPath);
+  }
+
+  // 1. Header with company details
   doc.fillColor('#4a6baf')
      .fontSize(20)
-     .text('AromaHut', margin, 30, { align: 'left' })
+     .text('AROMAHUT', margin, 30, { align: 'left' })
      .fontSize(10)
      .fillColor('#666666')
      .text('Premium Spices & Herbs', margin, 55)
+     .text('45, Spice Lane, Salem - 636007', margin, 70)
+     .text('Tamil Nadu, India', margin, 85)
+     .text(`GSTIN: ${process.env.GSTIN || '33ABCDE1234F1Z5'}`, margin, 100)
      .moveDown();
 
   // Invoice Info
@@ -224,38 +235,37 @@ async function generateProfessionalInvoice(order, res) {
      .fontSize(10)
      .fillColor('#333333')
      .text(`Invoice #: ${order.razorpayOrderId}`, margin + 350, 50, { align: 'right' })
-     .text(`Date: ${new Date(order.createdAt).toLocaleDateString('en-IN')}`, margin + 350, 65, { align: 'right' })
+     .text(`Date: ${new Date(order.createdAt).toLocaleDateString('en-IN', {
+       day: '2-digit',
+       month: 'short',
+       year: 'numeric'
+     })}`, margin + 350, 65, { align: 'right' })
      .moveDown();
 
-  // 2. Seller and Buyer Info
+  // 2. Buyer Info
   doc.fontSize(10)
      .fillColor('#333333')
-     .text('From:', margin, 100)
-     .text('AromaHut (Spice World Enterprises)', margin, 115)
-     .text('45, Spice Lane, Salem - 636007', margin, 130)
-     .text('Tamil Nadu, India', margin, 145)
-     .text('GSTIN: 33ABCDE1234F1Z5', margin, 160)
-     .text('Phone: +91 98765 43210', margin, 175)
-     .text(`Email: ${process.env.EMAIL_USER}`, margin, 190);
-
-  doc.text('Bill To:', margin + 300, 100)
-     .text(order.buyerName.toUpperCase(), margin + 300, 115)
-     .text(order.buyerAddress, margin + 300, 130);
+     .text('Bill To:', margin, 140)
+     .font('Helvetica-Bold')
+     .text(order.buyerName.toUpperCase(), margin, 155)
+     .font('Helvetica')
+     .text(order.buyerAddress, margin, 170);
   
   if (order.buyerTown || order.buyerPostalCode) {
-    doc.text([order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', '), margin + 300, 145);
+    doc.text([order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', '), margin, 185);
   }
-  doc.text(`Phone: ${order.buyerPhone}`, margin + 300, 160)
-     .text(`Email: ${order.buyerEmail}`, margin + 300, 175);
+  doc.text(`Phone: ${order.buyerPhone}`, margin, 200)
+     .text(`Email: ${order.buyerEmail}`, margin, 215);
 
   // Line separator
-  doc.moveTo(margin, 220)
-     .lineTo(margin + pageWidth, 220)
-     .strokeColor('#cccccc')
+  doc.moveTo(margin, 240)
+     .lineTo(margin + pageWidth, 240)
+     .strokeColor('#4a6baf')
+     .lineWidth(1)
      .stroke();
 
   // 3. Items Table
-  const tableTop = 240;
+  const tableTop = 260;
   const itemCodeX = margin;
   const descriptionX = margin + 50;
   const quantityX = margin + 300;
@@ -271,7 +281,7 @@ async function generateProfessionalInvoice(order, res) {
      .text('No.', itemCodeX, tableTop)
      .text('Description', descriptionX, tableTop)
      .text('Qty', quantityX, tableTop, { width: 50, align: 'right' })
-     .text('Price', priceX, tableTop, { width: 70, align: 'right' })
+     .text('Unit Price', priceX, tableTop, { width: 70, align: 'right' })
      .text('Amount', amountX, tableTop, { width: 80, align: 'right' })
      .moveTo(margin, tableTop + 20)
      .lineTo(margin + pageWidth, tableTop + 20)
@@ -295,38 +305,65 @@ async function generateProfessionalInvoice(order, res) {
        .text(`₹${item.productPrice.toFixed(2)}`, priceX, y, { width: 70, align: 'right' })
        .text(`₹${itemTotal.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
 
+    // Add weight if available
+    if (item.productWeight) {
+      doc.fontSize(8)
+         .fillColor('#666666')
+         .text(`(${item.productWeight})`, descriptionX, y + 15);
+    }
+
     itemCount++;
-    y += 25;
+    y += 30;
   });
 
   // Shipping Line
   doc.fontSize(10)
-     .text('Shipping', descriptionX, y)
+     .text('Shipping Charges', descriptionX, y)
      .text('1', quantityX, y, { width: 50, align: 'right' })
      .text('₹1.00', priceX, y, { width: 70, align: 'right' })
      .text('₹1.00', amountX, y, { width: 80, align: 'right' });
 
   subtotal += 1.00; // Add shipping
-  y += 30;
+  y += 40;
 
   // Total Amount
   doc.fontSize(12)
      .font('Helvetica-Bold')
-     .text('Total:', amountX - 50, y, { width: 50, align: 'right' })
+     .text('Subtotal:', amountX - 50, y, { width: 50, align: 'right' })
      .text(`₹${subtotal.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
+
+  // GST Calculation (assuming 5% GST)
+  const gstRate = 0.05;
+  const gstAmount = subtotal * gstRate;
+  const grandTotal = subtotal + gstAmount;
+  
+  y += 20;
+  doc.fontSize(10)
+     .text(`GST (${gstRate * 100}%):`, amountX - 50, y, { width: 50, align: 'right' })
+     .text(`₹${gstAmount.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
+
+  y += 20;
+  doc.fontSize(12)
+     .font('Helvetica-Bold')
+     .text('Grand Total:', amountX - 50, y, { width: 50, align: 'right' })
+     .text(`₹${grandTotal.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
 
   // 4. Payment Information
   y += 40;
   doc.fontSize(10)
+     .fillColor('#4a6baf')
      .text('Payment Information:', margin, y)
+     .fillColor('#333333')
      .text(`Payment ID: ${order.razorpayPaymentId}`, margin, y + 20)
      .text('Payment Method: Online Payment (Razorpay)', margin, y + 35)
      .text('Payment Status: Paid', margin, y + 50);
 
-  // 5. Footer
+  // 5. Footer with terms and conditions
   y += 80;
   doc.fontSize(8)
+     .fillColor('#4a6baf')
      .text('Terms & Conditions:', margin, y)
+     .fillColor('#333333')
      .text('- Payment is due immediately as this is a paid invoice', margin, y + 15)
      .text('- Please retain this invoice for your records', margin, y + 30)
      .text('- All sales are final', margin, y + 45)
@@ -334,8 +371,16 @@ async function generateProfessionalInvoice(order, res) {
 
   // Company Info at Bottom
   doc.fontSize(8)
+     .fillColor('#4a6baf')
      .text('AromaHut - Premium Spices and Herbs', margin, doc.page.height - 40)
-     .text('www.aromahut.in | Email: contact@aromahut.in', margin, doc.page.height - 25);
+     .fillColor('#666666')
+     .text('www.aromahut.in | Email: contact@aromahut.in | Phone: +91 98765 43210', margin, doc.page.height - 25);
+
+  // Add border around the entire page
+  doc.rect(margin - 20, margin - 20, pageWidth + 40, doc.page.height - 80)
+     .strokeColor('#4a6baf')
+     .lineWidth(0.5)
+     .stroke();
 
   doc.end();
 }
