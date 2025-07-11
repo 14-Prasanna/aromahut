@@ -13,7 +13,6 @@ const { Server } = require('socket.io');
 const http = require('http');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -27,15 +26,16 @@ const io = new Server(server, {
 
 // Middleware
 app.use(express.json());
+
 app.use(cors({
   origin: 'https://www.aromahut.in',
 }));
+
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
 }));
 
-// Database Connection
 mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 5000,
 })
@@ -45,7 +45,6 @@ mongoose.connect(process.env.MONGO_URI, {
     process.exit(1);
   });
 
-// Schemas and Models
 const orderSchema = new mongoose.Schema({
   buyerName: { type: String, required: true },
   buyerEmail: { type: String, required: true },
@@ -88,13 +87,11 @@ const feedbackSchema = new mongoose.Schema({
 });
 const Feedback = mongoose.model('Feedback', feedbackSchema);
 
-// Razorpay Configuration
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// Authentication Middleware
 const authenticateAdmin = (req, res, next) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -113,7 +110,6 @@ const authenticateAdmin = (req, res, next) => {
   }
 };
 
-// Socket.io Connection
 io.on('connection', (socket) => {
   console.log('✅ Client connected:', socket.id);
   socket.on('disconnect', () => {
@@ -121,281 +117,16 @@ io.on('connection', (socket) => {
   });
 });
 
-// Utility Functions
-async function sendOrderEmail(order) {
-  try {
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
-    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
-    
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: order.buyerEmail,
-      subject: 'Your AromaHut Order Confirmation',
-      html: buildOrderEmailHtml(order, totalAmount),
-    };
-
-    await transporter.sendMail(mailOptions);
-  } catch (error) {
-    console.error('Email Sending Error:', error);
-    throw error;
-  }
-}
-
-function buildOrderEmailHtml(order, totalAmount) {
-  const itemsHtml = order.items.map(item => `
-    <tr>
-      <td style="padding: 8px; border: 1px solid #ddd;">${sanitizeHtml(item.productName)}</td>
-      <td style="padding: 8px; border: 1px solid #ddd;">${item.productWeight || '-'}</td>
-      <td style="padding: 8px; border: 1px solid #ddd;">${item.productQuantity}</td>
-      <td style="padding: 8px; border: 1px solid #ddd;">₹${item.productPrice.toFixed(2)}</td>
-    </tr>
-  `).join('');
-
-  return `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
-      <h2 style="color: #4a6baf; text-align: center;">Order Confirmation</h2>
-      <p>Dear ${sanitizeHtml(order.buyerName)},</p>
-      <p>Thank you for your order from AromaHut! We're preparing your items and will notify you when they ship.</p>
-      
-      <h3 style="color: #4a6baf; margin-top: 20px;">Order Details</h3>
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-        <thead>
-          <tr style="background-color: #f8f9fa;">
-            <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Product</th>
-            <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Weight</th>
-            <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Quantity</th>
-            <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${itemsHtml}
-        </tbody>
-      </table>
-      
-      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-        <p style="margin: 0; font-weight: bold;">Order Total: ₹${totalAmount.toFixed(2)}</p>
-      </div>
-      
-      <h3 style="color: #4a6baf;">Shipping Information</h3>
-      <p>${sanitizeHtml(order.buyerName)}<br>
-      ${sanitizeHtml([order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', '))}</p>
-      
-      <p style="margin-top: 30px;">We appreciate your business! If you have any questions, please contact us at ${process.env.EMAIL_USER}.</p>
-      
-      <p style="margin-top: 20px; font-size: 0.9em; color: #6c757d;">Order ID: ${order.razorpayOrderId}<br>
-      Payment ID: ${order.razorpayPaymentId}</p>
-    </div>
-  `;
-}
-
-async function generateProfessionalInvoice(order, res) {
-  const doc = new PDFDocument({ size: 'A4', margin: 40 });
-  const filename = `AromaHut_Invoice_${order.razorpayOrderId}.pdf`;
-  
-  res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
-  res.setHeader('Content-type', 'application/pdf');
-  doc.pipe(res);
-
-  // Constants
-  const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-  const margin = doc.page.margins.left;
-  const tableWidth = pageWidth;
-
-  // Add AromaHut logo (assuming you have a logo.png in your project)
-  const logoPath = path.join(__dirname, 'logo.png');
-  if (fs.existsSync(logoPath)) {
-    doc.image(logoPath, margin + 400, 30, { width: 120, align: 'right' });
-  } else {
-    console.warn('Logo file not found at:', logoPath);
-  }
-
-  // 1. Header with company details
-  doc.fillColor('#4a6baf')
-     .fontSize(20)
-     .text('AROMAHUT', margin, 30, { align: 'left' })
-     .fontSize(10)
-     .fillColor('#666666')
-     .text('Premium Spices & Herbs', margin, 55)
-     .text('45, Spice Lane, Salem - 636007', margin, 70)
-     .text('Tamil Nadu, India', margin, 85)
-     .text(`GSTIN: ${process.env.GSTIN || '33ABCDE1234F1Z5'}`, margin, 100)
-     .moveDown();
-
-  // Invoice Info
-  doc.fontSize(14)
-     .fillColor('#4a6baf')
-     .text('TAX INVOICE', margin + 350, 30, { align: 'right' })
-     .fontSize(10)
-     .fillColor('#333333')
-     .text(`Invoice #: ${order.razorpayOrderId}`, margin + 350, 50, { align: 'right' })
-     .text(`Date: ${new Date(order.createdAt).toLocaleDateString('en-IN', {
-       day: '2-digit',
-       month: 'short',
-       year: 'numeric'
-     })}`, margin + 350, 65, { align: 'right' })
-     .moveDown();
-
-  // 2. Buyer Info
-  doc.fontSize(10)
-     .fillColor('#333333')
-     .text('Bill To:', margin, 140)
-     .font('Helvetica-Bold')
-     .text(order.buyerName.toUpperCase(), margin, 155)
-     .font('Helvetica')
-     .text(order.buyerAddress, margin, 170);
-  
-  if (order.buyerTown || order.buyerPostalCode) {
-    doc.text([order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', '), margin, 185);
-  }
-  doc.text(`Phone: ${order.buyerPhone}`, margin, 200)
-     .text(`Email: ${order.buyerEmail}`, margin, 215);
-
-  // Line separator
-  doc.moveTo(margin, 240)
-     .lineTo(margin + pageWidth, 240)
-     .strokeColor('#4a6baf')
-     .lineWidth(1)
-     .stroke();
-
-  // 3. Items Table
-  const tableTop = 260;
-  const itemCodeX = margin;
-  const descriptionX = margin + 50;
-  const quantityX = margin + 300;
-  const priceX = margin + 350;
-  const amountX = margin + 420;
-
-  // Table Header
-  doc.fontSize(10)
-     .font('Helvetica-Bold')
-     .fillColor('#ffffff')
-     .rect(margin, tableTop - 10, pageWidth, 20)
-     .fill('#4a6baf')
-     .text('No.', itemCodeX, tableTop)
-     .text('Description', descriptionX, tableTop)
-     .text('Qty', quantityX, tableTop, { width: 50, align: 'right' })
-     .text('Unit Price', priceX, tableTop, { width: 70, align: 'right' })
-     .text('Amount', amountX, tableTop, { width: 80, align: 'right' })
-     .moveTo(margin, tableTop + 20)
-     .lineTo(margin + pageWidth, tableTop + 20)
-     .stroke();
-
-  // Table Rows
-  let y = tableTop + 30;
-  let itemCount = 1;
-  let subtotal = 0;
-
-  order.items.forEach(item => {
-    const itemTotal = item.productPrice * item.productQuantity;
-    subtotal += itemTotal;
-
-    doc.fontSize(10)
-       .font('Helvetica')
-       .fillColor('#333333')
-       .text(itemCount.toString(), itemCodeX, y)
-       .text(item.productName, descriptionX, y)
-       .text(item.productQuantity.toString(), quantityX, y, { width: 50, align: 'right' })
-       .text(`₹${item.productPrice.toFixed(2)}`, priceX, y, { width: 70, align: 'right' })
-       .text(`₹${itemTotal.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
-
-    // Add weight if available
-    if (item.productWeight) {
-      doc.fontSize(8)
-         .fillColor('#666666')
-         .text(`(${item.productWeight})`, descriptionX, y + 15);
-    }
-
-    itemCount++;
-    y += 30;
-  });
-
-  // Shipping Line
-  doc.fontSize(10)
-     .text('Shipping Charges', descriptionX, y)
-     .text('1', quantityX, y, { width: 50, align: 'right' })
-     .text('₹1.00', priceX, y, { width: 70, align: 'right' })
-     .text('₹1.00', amountX, y, { width: 80, align: 'right' });
-
-  subtotal += 1.00; // Add shipping
-  y += 40;
-
-  // Total Amount
-  doc.fontSize(12)
-     .font('Helvetica-Bold')
-     .text('Subtotal:', amountX - 50, y, { width: 50, align: 'right' })
-     .text(`₹${subtotal.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
-
-  // GST Calculation (assuming 5% GST)
-  const gstRate = 0.05;
-  const gstAmount = subtotal * gstRate;
-  const grandTotal = subtotal + gstAmount;
-  
-  y += 20;
-  doc.fontSize(10)
-     .text(`GST (${gstRate * 100}%):`, amountX - 50, y, { width: 50, align: 'right' })
-     .text(`₹${gstAmount.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
-
-  y += 20;
-  doc.fontSize(12)
-     .font('Helvetica-Bold')
-     .text('Grand Total:', amountX - 50, y, { width: 50, align: 'right' })
-     .text(`₹${grandTotal.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
-
-  // 4. Payment Information
-  y += 40;
-  doc.fontSize(10)
-     .fillColor('#4a6baf')
-     .text('Payment Information:', margin, y)
-     .fillColor('#333333')
-     .text(`Payment ID: ${order.razorpayPaymentId}`, margin, y + 20)
-     .text('Payment Method: Online Payment (Razorpay)', margin, y + 35)
-     .text('Payment Status: Paid', margin, y + 50);
-
-  // 5. Footer with terms and conditions
-  y += 80;
-  doc.fontSize(8)
-     .fillColor('#4a6baf')
-     .text('Terms & Conditions:', margin, y)
-     .fillColor('#333333')
-     .text('- Payment is due immediately as this is a paid invoice', margin, y + 15)
-     .text('- Please retain this invoice for your records', margin, y + 30)
-     .text('- All sales are final', margin, y + 45)
-     .text('- Thank you for your business!', margin, y + 60);
-
-  // Company Info at Bottom
-  doc.fontSize(8)
-     .fillColor('#4a6baf')
-     .text('AromaHut - Premium Spices and Herbs', margin, doc.page.height - 40)
-     .fillColor('#666666')
-     .text('www.aromahut.in | Email: contact@aromahut.in | Phone: +91 98765 43210', margin, doc.page.height - 25);
-
-  // Add border around the entire page
-  doc.rect(margin - 20, margin - 20, pageWidth + 40, doc.page.height - 80)
-     .strokeColor('#4a6baf')
-     .lineWidth(0.5)
-     .stroke();
-
-  doc.end();
-}
-
-// Routes
 app.post('/admin/login', (req, res) => {
   const { username, password } = req.body;
-  if (username === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
+  if (username === 'admin' && password === 'password') {
     const token = jwt.sign({ isAdmin: true }, process.env.JWT_SECRET, { expiresIn: '1h' });
     return res.json({ status: 'success', token });
   }
   res.status(401).json({ error: 'Invalid credentials' });
 });
 
-app.get('/admin/orders', authenticateAdmin, async (req, res) => {
+app.get('/admin/orders', async (req, res) => {
   try {
     const { status, startDate, endDate } = req.query;
     const query = {};
@@ -414,15 +145,15 @@ app.get('/admin/orders', authenticateAdmin, async (req, res) => {
     const orders = await Order.find(query).sort({ createdAt: -1 }).lean();
     res.status(200).json({ status: 'success', data: orders });
   } catch (error) {
-    console.error('Error fetching orders:', error);
+    console.error('Error fetching orders:', error.message);
     res.status(500).json({ error: 'Failed to fetch orders', details: error.message });
   }
 });
 
-app.post('/admin/order-status', authenticateAdmin, async (req, res) => {
+app.post('/admin/order-status', async (req, res) => {
   const { orderId, step, completed } = req.body;
   if (!orderId || !step || typeof completed !== 'boolean') {
-    return res.status(400).json({ error: 'Missing required fields' });
+    return res.status(400).json({ error: 'Missing required fields: orderId, step, completed' });
   }
   const validSteps = ['packet_success', 'packed_to_user', 'sent_to_parcel'];
   if (!validSteps.includes(step)) {
@@ -454,44 +185,170 @@ app.post('/admin/order-status', authenticateAdmin, async (req, res) => {
     });
     res.status(200).json({ status: 'success', message: 'Order status updated' });
   } catch (error) {
-    console.error('Error updating order status:', error);
+    console.error('Error updating order status:', error.message);
     res.status(500).json({ error: 'Failed to update order status', details: error.message });
   }
 });
 
-app.get('/admin/order/:id', authenticateAdmin, async (req, res) => {
+app.get('/admin/order/:id', async (req, res) => {
   try {
     const order = await Order.findOne({ razorpayOrderId: req.params.id }).lean();
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
-    res.status(200).json({ status: 'success', data: order });
+    const response = {
+      id: order.razorpayOrderId,
+      buyer: {
+        name: order.buyerName,
+        email: order.buyerEmail,
+        phone: order.buyerPhone,
+        address: [order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', '),
+      },
+      items: order.items,
+      createdAt: order.createdAt,
+      status: order.status,
+      steps: {
+        packetSuccess: order.packetSuccess,
+        packedToUser: order.packedToUser,
+        sentToParcel: order.sentToParcel,
+      },
+      isParcelReady: order.isParcelReady,
+    };
+    res.status(200).json({ status: 'success', data: response });
   } catch (error) {
-    console.error('Error fetching order:', error);
+    console.error('Error fetching order:', error.message);
     res.status(500).json({ error: 'Failed to fetch order', details: error.message });
   }
 });
 
-app.get('/admin/products', authenticateAdmin, async (req, res) => {
+app.get('/admin/products', async (req, res) => {
   try {
-    const products = await Product.find().sort({ updatedAt: -1 }).lean();
-    res.status(200).json({ status: 'success', data: products });
+    const { page = 1 } = req.query;
+    const limit = 10;
+    const skip = (parseInt(page) - 1) * limit;
+    const products = await Product.find()
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+    const total = await Product.countDocuments();
+    res.status(200).json({
+      status: 'success',
+      data: products,
+      pagination: {
+        page: parseInt(page),
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+      },
+    });
   } catch (error) {
-    console.error('Error fetching products:', error);
+    console.error('Error fetching products:', error.message);
     res.status(500).json({ error: 'Failed to fetch products', details: error.message });
   }
 });
 
-app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
+app.post('/admin/start-packing', async (req, res) => {
+  const { productId } = req.body;
+  if (!productId) {
+    return res.status(400).json({ error: 'Missing productId' });
+  }
   try {
-    const order = await Order.findOne({ razorpayOrderId: req.params.orderId });
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    product.packetsToPack = 0;
+    product.updatedAt = new Date();
+    await product.save();
+    res.status(200).json({ status: 'success', message: 'Packing started, packetsToPack reset to 0' });
+  } catch (error) {
+    console.error('Error starting packing:', error.message);
+    res.status(500).json({ error: 'Failed to start packing', details: error.message });
+  }
+});
+
+app.get('/admin/customers', async (req, res) => {
+  try {
+    const orders = await Order.find({ isParcelReady: false })
+      .sort({ createdAt: -1 })
+      .lean();
+    const customers = orders.map(order => ({
+      orderId: order.razorpayOrderId,
+      customerName: order.buyerName,
+      email: order.buyerEmail,
+      buyerPhone: order.buyerPhone,
+      dateTime: order.createdAt,
+      status: order.status,
+      products: order.items.map(item => ({
+        id: item._id.toString(),
+        name: item.productName,
+        quantity: item.productQuantity,
+      })),
+    }));
+    res.status(200).json({ status: 'success', data: customers });
+  } catch (error) {
+    console.error('Error fetching customers:', error.message);
+    res.status(500).json({ error: 'Failed to fetch customers', details: error.message });
+  }
+});
+
+app.post('/admin/parcel-ready', async (req, res) => {
+  const { orderId } = req.body;
+  if (!orderId) {
+    return res.status(400).json({ error: 'Missing orderId' });
+  }
+  try {
+    const order = await Order.findOne({ razorpayOrderId: orderId });
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
-    await generateProfessionalInvoice(order, res);
+    order.isParcelReady = true;
+    order.status = 'Completed';
+    await order.save();
+    io.emit('parcelReady', { orderId: order.razorpayOrderId });
+    res.status(200).json({ status: 'success', message: 'Parcel marked as ready' });
   } catch (error) {
-    console.error('Error generating invoice:', error);
-    res.status(500).json({ error: 'Failed to generate invoice', details: error.message });
+    console.error('Error marking parcel ready:', error.message);
+    res.status(500).json({ error: 'Failed to mark parcel ready', details: error.message });
+  }
+});
+
+// Update packetsToPack every 10 minutes
+cron.schedule('*/10 * * * *', async () => {
+  try {
+    const products = await Product.find();
+    const orders = await Order.find({ status: 'Pending' });
+    for (const product of products) {
+      const totalPackets = orders.reduce((sum, order) => {
+        const productItems = order.items.filter(item => 
+          item.productName === product.name && item.productWeight === product.weight
+        );
+        return sum + productItems.reduce((acc, item) => acc + item.productQuantity, 0);
+      }, 0);
+      if (product.packetsToPack !== totalPackets) {
+        product.packetsToPack = totalPackets;
+        product.updatedAt = new Date();
+        await product.save();
+      }
+    }
+    console.log('✅ packetsToPack updated for all products');
+  } catch (error) {
+    console.error('Error in cron job:', error.message);
+  }
+});
+
+app.get('/test-email', async (req, res) => {
+  try {
+    await sendOrderEmail({
+      buyerEmail: 'aromahut24@gmail.com',
+      buyerName: 'Test User',
+      buyerAddress: '123 Test Street, Test City, 123456',
+      items: [{ productName: 'Test Product', productPrice: 100, productQuantity: 1 }],
+    });
+    res.status(200).json({ message: 'Test email sent successfully!' });
+  } catch (error) {
+    console.error('Test Email Error:', error.message, error.stack);
+    res.status(500).json({ error: 'Failed to send test email', details: error.message });
   }
 });
 
@@ -503,7 +360,6 @@ app.post('/create-order', async (req, res) => {
   if (!items || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'Invalid items: Must be a non-empty array' });
   }
-  
   let calculatedAmount = 0;
   for (const item of items) {
     if (!item.name || !item.quantity || isNaN(item.price) || item.quantity < 1 || item.price < 0) {
@@ -511,20 +367,16 @@ app.post('/create-order', async (req, res) => {
     }
     calculatedAmount += item.price * item.quantity;
   }
-  
   calculatedAmount += 1.00;
   calculatedAmount = Math.round(calculatedAmount * 100);
-  
   if (calculatedAmount !== amount) {
     return res.status(400).json({ error: `Amount mismatch: Expected ${calculatedAmount} paise, received ${amount} paise` });
   }
-
   const options = {
     amount: amount,
     currency: 'INR',
     receipt: `receipt_order_${Date.now()}`,
   };
-
   try {
     const order = await razorpay.orders.create(options);
     res.json(order);
@@ -545,37 +397,27 @@ app.post('/verify-payment', async (req, res) => {
     buyerAddress,
     items,
   } = req.body;
-
-  // Validate required fields
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature ||
       !buyerName || !buyerEmail || !buyerPhone || !buyerAddress || !items || !Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ status: 'failed', error: 'Missing required fields' });
   }
-
-  // Sanitize inputs
   const sanitizedBuyerName = sanitizeHtml(buyerName);
   const sanitizedBuyerEmail = sanitizeHtml(buyerEmail);
   const sanitizedBuyerPhone = sanitizeHtml(buyerPhone);
   const sanitizedBuyerAddress = sanitizeHtml(buyerAddress);
-
-  // Validate email and phone
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedBuyerEmail)) {
     return res.status(400).json({ status: 'failed', error: 'Invalid email address' });
   }
   if (!/^\d{10}$/.test(sanitizedBuyerPhone)) {
     return res.status(400).json({ status: 'failed', error: 'Invalid phone number: Must be 10 digits' });
   }
-
-  // Verify payment signature
   const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
   hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
   const generatedSignature = hmac.digest('hex');
-
   if (generatedSignature !== razorpay_signature) {
     console.error('Payment verification failed: Invalid signature');
     return res.status(400).json({ status: 'failed', message: 'Payment verification failed' });
   }
-
   try {
     const addressParts = sanitizedBuyerAddress.split(', ');
     const orderData = {
@@ -594,14 +436,12 @@ app.post('/verify-payment', async (req, res) => {
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
     };
-
     const order = new Order(orderData);
     await order.save();
     await sendOrderEmail(order);
-    
     return res.json({ status: 'success', message: 'Payment verified, order saved, and email sent!' });
   } catch (error) {
-    console.error('Error processing payment:', error);
+    console.error('Error processing payment:', error.message, error.stack);
     return res.status(500).json({ status: 'failed', error: 'Server error', details: error.message });
   }
 });
@@ -618,18 +458,16 @@ app.post('/submit-feedback', async (req, res) => {
     if (comment && comment.length < 3) {
       return res.status(400).json({ error: 'Comment must be at least 3 characters long' });
     }
-
     const feedback = new Feedback({
       orderId,
       paymentId,
       rating: rating ? parseInt(rating, 10) : undefined,
       comment: comment ? sanitizeHtml(comment) : undefined,
     });
-
     await feedback.save();
     res.status(200).json({ message: 'Feedback submitted successfully' });
   } catch (error) {
-    console.error('Error saving feedback:', error);
+    console.error('Error saving feedback:', error.message, error.stack);
     res.status(500).json({ error: 'Failed to save feedback', details: error.message });
   }
 });
@@ -640,16 +478,13 @@ app.get('/get-order', async (req, res) => {
     if (!orderId || !paymentId) {
       return res.status(400).json({ error: 'Order ID and Payment ID are required' });
     }
-
     const order = await Order.findOne({
       razorpayOrderId: orderId,
       razorpayPaymentId: paymentId,
     });
-
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
-
     const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
     const response = {
       id: order.razorpayOrderId,
@@ -668,21 +503,182 @@ app.get('/get-order', async (req, res) => {
         price: item.productPrice,
       })),
     };
-
     res.status(200).json(response);
   } catch (error) {
-    console.error('Error fetching order:', error);
+    console.error('Error fetching order:', error.message, error.stack);
     res.status(500).json({ error: 'Failed to fetch order', details: error.message });
   }
 });
 
-// Error Handling Middleware
+async function sendOrderEmail(order) {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'aromahut24@gmail.com',
+        pass: 'zrbh uuok rhqe gyoi',
+      },
+    });
+    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
+    const itemsHtml = order.items.map(item => `
+      <tr>
+        <td style="padding: 8px; border: 1px solid #ddd;">${sanitizeHtml(item.productName)}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${item.productWeight || '-'}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">${item.productQuantity}</td>
+        <td style="padding: 8px; border: 1px solid #ddd;">₹${item.productPrice.toFixed(2)}</td>
+      </tr>
+    `).join('');
+    const mailOptions = {
+      from: 'aromahut24@gmail.com',
+      to: order.buyerEmail,
+      subject: 'Thank You for Your Purchase from AromaHut!',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd;">
+          <h2 style="color: #ff6b00;">Order Confirmation</h2>
+          <p>Dear ${sanitizeHtml(order.buyerName.charAt(0).toUpperCase() + order.buyerName.slice(1))}</p>
+          <p>Thank you for shopping with AromaHut! Your order has been successfully placed.</p>
+          <h3>Order Details</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background-color: #f9f9f9;">
+                <th style="padding: 8px; border: 1px solid #ddd;">Product</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Weight</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Quantity</th>
+                <th style="padding: 8px; border: 1px solid #ddd;">Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemsHtml}
+            </tbody>
+          </table>
+          <p style="margin-top: 20px;"><strong>Total (including ₹1.00 shipping):</strong> ₹${totalAmount.toFixed(2)}</p>
+          <h3>Shipping To</h3>
+          <p>${sanitizeHtml(order.buyerName.toUpperCase())}</p>
+          <p>${sanitizeHtml([order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', ').toUpperCase())}</p>
+          <p>We’ll notify you once your order has shipped. For any questions, contact us at aromahut24@gmail.com.</p>
+          <p>Best regards,<br>AromaHut Team</p>
+        </div>
+      `,
+    };
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Email Sending Error:', error.message, error.stack);
+    throw error;
+  }
+}
+
+// New endpoint to download PDF invoice
+app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
+  try {
+    const order = await Order.findOne({ razorpayOrderId: req.params.orderId });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    const filename = `invoice_${order.razorpayOrderId}.pdf`;
+
+    // Set response headers for PDF download
+    res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-type', 'application/pdf');
+
+    // Pipe PDF to response
+    doc.pipe(res);
+
+    // Add logo to top-left corner
+    const logoPath = path.join(__dirname, 'public', 'img', 'aromahutTitleIcon.png');
+    doc.image(logoPath, 50, 50, { width: 80 });
+
+    // Fonts and styling
+    doc.font('Helvetica');
+
+    // Seller Information
+    doc.fontSize(16).fillColor('#003366').text('Spice World Enterprises', { align: 'center' });
+    doc.fontSize(10).fillColor('black');
+    doc.text('No. 45, Spice Lane, Salem - 636007, Tamil Nadu, India', { align: 'center' });
+    doc.text('GSTIN: 33ABCDE1234F125 | Phone: +91-98765-43210 | Email: sales@spiceworld.com', { align: 'center' });
+    doc.moveDown(1);
+
+    // Invoice Title and Details
+    doc.fontSize(14).fillColor('#003366').text('INVOICE', { align: 'center' });
+    doc.fontSize(10).fillColor('black');
+    doc.text(`Invoice No: INV-${order.razorpayOrderId.slice(0, 8)}`, { align: 'left' });
+    doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString('en-IN')}`, { align: 'left' });
+    doc.moveDown(1);
+
+    // Buyer Information
+    doc.fontSize(12).fillColor('black').text('Bill To:', { align: 'left' });
+    doc.fontSize(10);
+    doc.text(order.buyerName, { align: 'left' });
+    doc.text([order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', '), { align: 'left' });
+    doc.text(`GSTIN: 33WXYZZ5678K129 | Phone: ${order.buyerPhone}`, { align: 'left' });
+    doc.text(`Email: ${order.buyerEmail}`, { align: 'left' });
+    doc.moveDown(1);
+
+    // Items Table
+    doc.fontSize(12).text('Items:', { align: 'left' });
+    doc.fontSize(10);
+
+    // Table header
+    const tableTop = doc.y + 10;
+    const tableX = 50;
+    doc.font('Helvetica-Bold');
+    doc.text('Description', tableX, tableTop, { width: 200 });
+    doc.text('Weight', tableX + 200, tableTop, { width: 100, align: 'center' });
+    doc.text('Quantity', tableX + 300, tableTop, { width: 80, align: 'center' });
+    doc.text('Unit Price', tableX + 380, tableTop, { width: 80, align: 'right' });
+    doc.text('Total', tableX + 460, tableTop, { width: 80, align: 'right' });
+    doc.moveDown(0.5);
+    doc.lineWidth(1).moveTo(tableX, doc.y).lineTo(tableX + 540, doc.y).stroke();
+
+    // Table rows
+    doc.font('Helvetica');
+    let totalAmount = 0;
+    order.items.forEach((item, index) => {
+      const rowY = doc.y + 10;
+      doc.text(item.productName, tableX, rowY, { width: 200 });
+      doc.text(item.productWeight || '-', tableX + 200, rowY, { width: 100, align: 'center' });
+      doc.text(item.productQuantity.toString(), tableX + 300, rowY, { width: 80, align: 'center' });
+      doc.text(`₹${item.productPrice.toFixed(2)}`, tableX + 380, rowY, { width: 80, align: 'right' });
+      const itemTotal = item.productPrice * item.productQuantity;
+      doc.text(`₹${itemTotal.toFixed(2)}`, tableX + 460, rowY, { width: 80, align: 'right' });
+      totalAmount += itemTotal;
+      doc.moveDown(0.5);
+      doc.lineWidth(0.5).moveTo(tableX, doc.y).lineTo(tableX + 540, doc.y).stroke();
+    });
+
+    // Totals
+    const subtotalY = doc.y + 10;
+    totalAmount += 1.00; // Adding shipping
+    doc.text('Subtotal', tableX + 380, subtotalY, { width: 80, align: 'right' });
+    doc.text(`₹${(totalAmount - 1).toFixed(2)}`, tableX + 460, subtotalY, { width: 80, align: 'right' });
+    doc.moveDown(0.5);
+    doc.text('Shipping', tableX + 380, doc.y, { width: 80, align: 'right' });
+    doc.text('₹1.00', tableX + 460, doc.y, { width: 80, align: 'right' });
+    doc.moveDown(0.5);
+    doc.lineWidth(1).moveTo(tableX, doc.y).lineTo(tableX + 540, doc.y).stroke();
+    doc.font('Helvetica-Bold');
+    doc.text('Total', tableX + 380, doc.y + 10, { width: 80, align: 'right' });
+    doc.text(`₹${totalAmount.toFixed(2)}`, tableX + 460, doc.y + 10, { width: 80, align: 'right' });
+
+    // Footer
+    doc.moveDown(2);
+    doc.fontSize(10).text('Thank you for your business!', { align: 'center' });
+    doc.text('For any inquiries, please contact us at sales@spiceworld.com.', { align: 'center' });
+
+    // Finalize PDF
+    doc.end();
+  } catch (error) {
+    console.error('Error generating invoice:', error.message, error.stack);
+    res.status(500).json({ error: 'Failed to generate invoice', details: error.message });
+  }
+});
+
 app.use((err, req, res, next) => {
-  console.error('Unhandled Error:', err);
+  console.error('Unhandled Error:', err.message, err.stack);
   res.status(500).json({ error: 'Internal server error', details: err.message });
 });
 
-// Server Startup
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
