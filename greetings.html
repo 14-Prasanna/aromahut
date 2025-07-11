@@ -353,7 +353,15 @@
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
 
-        // Add logo (using text as placeholder - replace with actual image if available)
+const imgElement = document.getElementById('logo');
+const canvas = document.createElement('canvas');
+canvas.width = imgElement.width;
+canvas.height = imgElement.height;
+const ctx = canvas.getContext('2d');
+ctx.drawImage(imgElement, 0, 0);
+const logoImg = canvas.toDataURL('img/aromahutlogo.png');
+
+doc.addImage(logoImg, 'PNG', 150, 10, 40, 20); // x, y, width, height
         doc.setFontSize(20);
         doc.setTextColor(255, 107, 0);
         doc.text('AromaHut', 160, 20);
