@@ -25,6 +25,22 @@
       background-color: #f9f9f9;
     }
 
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
     .container {
       max-width: 95%;
       margin: 20px auto;
@@ -155,6 +171,7 @@
     .invoice-logo {
       max-width: 120px;
       height: auto;
+      filter: grayscale(100%) contrast(120%);
     }
 
     .invoice-details {
@@ -206,6 +223,10 @@
       border-bottom: none;
     }
 
+    .shipping-row {
+      font-weight: bold;
+    }
+
     .invoice-total {
       text-align: right;
       margin-top: 20px;
@@ -252,7 +273,7 @@
       to { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 576px) {
+    @media (max-width: 768px) {
       h1 {
         font-size: 2rem;
       }
@@ -278,6 +299,13 @@
 
       .invoice-details div {
         min-width: 100%;
+      }
+
+      /* Make table responsive on mobile */
+      .invoice-section table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
       }
     }
   </style>
@@ -352,20 +380,11 @@
 
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
-
-const imgElement = document.getElementById('logo');
-const canvas = document.createElement('canvas');
-canvas.width = imgElement.width;
-canvas.height = imgElement.height;
-const ctx = canvas.getContext('2d');
-ctx.drawImage(imgElement, 0, 0);
-const logoImg = canvas.toDataURL('img/aromahutlogo.png');
-
-doc.addImage(logoImg, 'PNG', 150, 10, 40, 20); // x, y, width, height
+        
+        // Create a black and white version of the logo (using text since we don't have actual logo)
         doc.setFontSize(20);
-        doc.setTextColor(255, 107, 0);
-        doc.text('AromaHut', 160, 20);
         doc.setTextColor(0, 0, 0);
+        doc.text('AromaHut', 160, 20);
         
         // Invoice title
         doc.setFontSize(16);
@@ -387,7 +406,7 @@ doc.addImage(logoImg, 'PNG', 150, 10, 40, 20); // x, y, width, height
         // Items table header
         doc.setFontSize(12);
         doc.setTextColor(255, 255, 255);
-        doc.setFillColor(255, 107, 0);
+        doc.setFillColor(0, 0, 0); // Black header for B&W
         doc.rect(20, 90, 170, 10, 'F');
         doc.text('Item', 22, 96);
         doc.text('Qty', 120, 96);
@@ -397,6 +416,7 @@ doc.addImage(logoImg, 'PNG', 150, 10, 40, 20); // x, y, width, height
 
         // Items
         let y = 105;
+        let totalWeight = 0;
         orderData.items.forEach((item, index) => {
           doc.setFontSize(10);
           doc.text(`${index + 1}. ${item.name}`, 22, y);
@@ -404,12 +424,31 @@ doc.addImage(logoImg, 'PNG', 150, 10, 40, 20); // x, y, width, height
           doc.text(`Rs.${item.price}`, 140, y);
           doc.text(`Rs.${item.price * item.quantity}`, 170, y);
           y += 7;
+          
+          // Calculate total weight (assuming each item has a weight property)
+          if (item.weight) {
+            totalWeight += item.weight * item.quantity;
+          }
         });
 
+        // Calculate shipping based on weight
+        const shippingFee = calculateShipping(totalWeight);
+        
+        // Add shipping row
+        y += 7;
+        doc.setFontSize(10);
+        doc.text('Shipping Fee:', 140, y);
+        doc.text(`Rs.${shippingFee}`, 170, y);
+
         // Total
+        y += 10;
         doc.setFontSize(12);
-        doc.text(`Total Amount:`, 140, y + 10);
-        doc.text(`Rs.${orderData.amount / 100}`, 170, y + 10);
+        doc.text(`Subtotal:`, 140, y);
+        doc.text(`Rs.${orderData.amount / 100}`, 170, y);
+        
+        y += 7;
+        doc.text(`Total Amount:`, 140, y);
+        doc.text(`Rs.${(orderData.amount / 100) + shippingFee}`, 170, y);
 
         // Company information
         doc.setFontSize(10);
@@ -427,6 +466,17 @@ doc.addImage(logoImg, 'PNG', 150, 10, 40, 20); // x, y, width, height
           window.location.href = 'index.html';
         }, 1000);
       });
+
+      function calculateShipping(totalWeight) {
+        // Shipping calculation formula:
+        // Base fee: Rs.40 for first 1kg, Rs.80 for 1.1-2kg
+        // Then Rs.30 for each additional kg
+        if (totalWeight <= 1) return 40;
+        if (totalWeight <= 2) return 80;
+        
+        const additionalKg = Math.ceil(totalWeight - 2);
+        return 80 + (additionalKg * 30);
+      }
 
       function showInvoiceSection() {
         document.querySelector('.feedback-section').style.display = 'none';
@@ -462,6 +512,8 @@ doc.addImage(logoImg, 'PNG', 150, 10, 40, 20); // x, y, width, height
         // Items table
         const itemsTable = document.getElementById('invoiceItems');
         itemsTable.innerHTML = ''; // Clear any existing rows
+        
+        let totalWeight = 0;
         data.items.forEach(item => {
           const row = document.createElement('tr');
           row.innerHTML = `
@@ -471,10 +523,25 @@ doc.addImage(logoImg, 'PNG', 150, 10, 40, 20); // x, y, width, height
             <td>Rs.${item.price * item.quantity}</td>
           `;
           itemsTable.appendChild(row);
+          
+          // Calculate total weight (assuming each item has a weight property)
+          if (item.weight) {
+            totalWeight += item.weight * item.quantity;
+          }
         });
+        
+        // Calculate and add shipping row
+        const shippingFee = calculateShipping(totalWeight);
+        const shippingRow = document.createElement('tr');
+        shippingRow.className = 'shipping-row';
+        shippingRow.innerHTML = `
+          <td colspan="3">Shipping Fee</td>
+          <td>Rs.${shippingFee}</td>
+        `;
+        itemsTable.appendChild(shippingRow);
 
         // Total
-        document.getElementById('totalAmount').textContent = `Rs.${data.amount / 100}`;
+        document.getElementById('totalAmount').textContent = `Rs.${(data.amount / 100) + shippingFee}`;
       }
     });
   </script>
@@ -505,7 +572,8 @@ doc.addImage(logoImg, 'PNG', 150, 10, 40, 20); // x, y, width, height
           <h2>INVOICE</h2>
           <p>Thank you for your purchase</p>
         </div>
-        <img src="img/aromahutlogo.png" alt="AromaHut Logo" class="invoice-logo">
+        <!-- Dummy logo (text-based) -->
+        <div class="invoice-logo" style="font-size: 24px; font-weight: bold; color: #333;">AROMAHUT</div>
       </div>
 
       <div class="invoice-details">
