@@ -1,7 +1,5 @@
-<<<<<<< HEAD
-=======
 require('dotenv').config();
->>>>>>> 145008d596b2e67abba3977f57d15da592d77b13
+
 const express = require('express');
 const mongoose = require('mongoose');
 const Razorpay = require('razorpay');
@@ -10,18 +8,6 @@ const cors = require('cors');
 const nodemailer = require('nodemailer');
 const rateLimit = require('express-rate-limit');
 const sanitizeHtml = require('sanitize-html');
-<<<<<<< HEAD
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
-const path = require('path');
-=======
-const jwt = require('jsonwebtoken');
-const cron = require('node-cron');
-const { Server } = require('socket.io');
-const http = require('http');
-const PDFDocument = require('pdfkit');
-const fs = require('fs');
->>>>>>> 145008d596b2e67abba3977f57d15da592d77b13
 
 const app = express();
 const server = http.createServer(app);
@@ -35,43 +21,22 @@ const io = new Server(server, {
 
 // Middleware
 app.use(express.json());
-<<<<<<< HEAD
-app.use(cors({ origin: '*' }));
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests
-}));
-
-// Hardcoded environment variables
-const MONGO_URI = 'mongodb+srv://prasannavenkatesh652:6qRFqpH3RX9v2yaF@aromahut-cluster0.au6z4ri.mongodb.net/?retryWrites=true&w=majority&appName=aromahut-Cluster0';
-const EMAIL_USER = 'aromahut24@gmail.com'; // Corrected typo in email
-const EMAIL_PASS = 'zrbhuuokrhqegyol';
-const RAZORPAY_KEY_ID = 'rzp_live_0jmA0pn1TKRzf7';
-const RAZORPAY_KEY_SECRET = 'PwxPr4abPB4jDgz4AJjRUiQ6';
-const PORT = 5000;
-
-// MongoDB Connection
-mongoose.connect(MONGO_URI, {
-=======
-
-app.use(cors({
-  origin: 'https://www.aromahut.in',
-}));
-
+app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
 }));
 
-const requiredEnvVars = ['MONGO_URI', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'EMAIL_USER', 'EMAIL_PASS', 'JWT_SECRET'];
+// Validate environment variables
+const requiredEnvVars = ['MONGO_URI', 'RAZORPAY_KEY_ID', 'RAZORPAY_KEY_SECRET', 'EMAIL_USER', 'EMAIL_PASS'];
 const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
 if (missingEnvVars.length) {
   console.error(`❌ Missing environment variables: ${missingEnvVars.join(', ')}`);
   process.exit(1);
 }
 
+// MongoDB Connection
 mongoose.connect(process.env.MONGO_URI, {
->>>>>>> 145008d596b2e67abba3977f57d15da592d77b13
   serverSelectionTimeoutMS: 5000,
 })
   .then(() => console.log('✅ MongoDB Connected'))
@@ -446,13 +411,9 @@ app.post('/verify-payment', async (req, res) => {
   if (!/^\d{10}$/.test(sanitizedBuyerPhone)) {
     return res.status(400).json({ status: 'failed', error: 'Invalid phone number: Must be 10 digits' });
   }
-<<<<<<< HEAD
 
   // Verify Razorpay signature
-  const hmac = crypto.createHmac('sha256', RAZORPAY_KEY_SECRET);
-=======
   const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
->>>>>>> 145008d596b2e67abba3977f57d15da592d77b13
   hmac.update(razorpay_order_id + '|' + razorpay_payment_id);
   const generatedSignature = hmac.digest('hex');
   if (generatedSignature !== razorpay_signature) {
@@ -479,26 +440,17 @@ app.post('/verify-payment', async (req, res) => {
     };
     const order = new Order(orderData);
     await order.save();
-<<<<<<< HEAD
 
-    // Generate invoice PDF
-    const invoicePath = await generateInvoicePDF(order);
-
-    // Send confirmation email with invoice attachment
-    await sendOrderEmail(order, invoicePath);
-
-    return res.json({ status: 'success', message: 'Payment verified, order saved, invoice generated, and email sent!' });
-=======
+    // Send confirmation email
     await sendOrderEmail(order);
+
     return res.json({ status: 'success', message: 'Payment verified, order saved, and email sent!' });
->>>>>>> 145008d596b2e67abba3977f57d15da592d77b13
   } catch (error) {
     console.error('Error processing payment:', error.message, error.stack);
     return res.status(500).json({ status: 'failed', error: 'Server error', details: error.message });
   }
 });
 
-<<<<<<< HEAD
 // Generate Invoice PDF
 async function generateInvoicePDF(order) {
   return new Promise((resolve, reject) => {
@@ -652,9 +604,6 @@ async function sendOrderEmail(order, invoicePath) {
   }
 }
 
-// Submit Feedback Endpoint
-=======
->>>>>>> 145008d596b2e67abba3977f57d15da592d77b13
 app.post('/submit-feedback', async (req, res) => {
   const { orderId, paymentId, rating, comment } = req.body;
   try {
@@ -719,9 +668,7 @@ app.get('/get-order', async (req, res) => {
   }
 });
 
-<<<<<<< HEAD
-// Error Handling Middleware
-=======
+// Send Order Confirmation Email
 async function sendOrderEmail(order) {
   try {
     const transporter = nodemailer.createTransport({
@@ -731,7 +678,9 @@ async function sendOrderEmail(order) {
         pass: process.env.EMAIL_PASS,
       },
     });
-    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
+
+    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00; // Include shipping
+
     const itemsHtml = order.items.map(item => `
       <tr>
         <td style="padding: 8px; border: 1px solid #ddd;">${sanitizeHtml(item.productName)}</td>
@@ -740,6 +689,7 @@ async function sendOrderEmail(order) {
         <td style="padding: 8px; border: 1px solid #ddd;">₹${item.productPrice.toFixed(2)}</td>
       </tr>
     `).join('');
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: order.buyerEmail,
@@ -747,7 +697,7 @@ async function sendOrderEmail(order) {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd;">
           <h2 style="color: #ff6b00;">Order Confirmation</h2>
-          <p>Dear ${sanitizeHtml(order.buyerName.charAt(0).toUpperCase() + order.buyerName.slice(1))}</p>
+          <p>Dear ${sanitizeHtml(order.buyer,rightName)}</p>
           <p>Thank you for shopping with AromaHut! Your order has been successfully placed.</p>
           <h3>Order Details</h3>
           <table style="width: 100%; border-collapse: collapse;">
@@ -772,6 +722,7 @@ async function sendOrderEmail(order) {
         </div>
       `,
     };
+
     await transporter.sendMail(mailOptions);
   } catch (error) {
     console.error('Email Sending Error:', error.message, error.stack);
@@ -887,18 +838,11 @@ app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
   }
 });
 
->>>>>>> 145008d596b2e67abba3977f57d15da592d77b13
 app.use((err, req, res, next) => {
   console.error('Unhandled Error:', err.message, err.stack);
   res.status(500).json({ error: 'Internal server error', details: err.message });
 });
 
-<<<<<<< HEAD
 // Start Server
-app.listen(PORT, () => {
-=======
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
->>>>>>> 145008d596b2e67abba3977f57d15da592d77b13
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => {});
