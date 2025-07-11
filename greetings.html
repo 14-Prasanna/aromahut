@@ -227,6 +227,22 @@
       text-align: center;
     }
 
+    .company-info {
+      margin-top: 20px;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .company-info h3 {
+      color: var(--primary-orange);
+      margin-bottom: 10px;
+    }
+
+    .company-info p {
+      margin: 5px 0;
+      font-size: 0.9rem;
+    }
+
     .animate-fadeIn {
       animation: fadeIn 0.5s ease forwards;
     }
@@ -377,21 +393,24 @@
           doc.setFontSize(10);
           doc.text(`${index + 1}. ${item.name}`, 22, y);
           doc.text(`${item.quantity}`, 120, y);
-          doc.text(`₹${item.price}`, 140, y);
-          doc.text(`₹${item.price * item.quantity}`, 170, y);
+          doc.text(`Rs.${item.price}`, 140, y);
+          doc.text(`Rs.${item.price * item.quantity}`, 170, y);
           y += 7;
         });
 
         // Total
         doc.setFontSize(12);
         doc.text(`Total Amount:`, 140, y + 10);
-        doc.text(`₹${orderData.amount / 100}`, 170, y + 10);
+        doc.text(`Rs.${orderData.amount / 100}`, 170, y + 10);
 
-        // Footer
+        // Company information
         doc.setFontSize(10);
         doc.setTextColor(100, 100, 100);
-        doc.text('Thank you for your purchase!', 20, y + 30);
-        doc.text('AromaHut - Premium Spices & Herbs', 20, y + 35);
+        doc.text('AromaHut - Bringing authentic homemade flavors to your kitchen since 2010', 20, y + 30);
+        doc.text('70/36, Thiruvenkadam Street, Gugai, Salem – 636006, Tamil Nadu', 20, y + 35);
+        doc.text('Phone: +91 9443383538 | Email: aromahut24@gmail.com', 20, y + 40);
+        doc.text('Mon-Sat: 9AM - 6PM', 20, y + 45);
+        doc.text('Thank you for your purchase!', 20, y + 50);
 
         doc.save(`AromaHut_Invoice_${orderData.id}.pdf`);
 
@@ -440,14 +459,14 @@
           row.innerHTML = `
             <td>${item.name}</td>
             <td>${item.quantity}</td>
-            <td>₹${item.price}</td>
-            <td>₹${item.price * item.quantity}</td>
+            <td>Rs.${item.price}</td>
+            <td>Rs.${item.price * item.quantity}</td>
           `;
           itemsTable.appendChild(row);
         });
 
         // Total
-        document.getElementById('totalAmount').textContent = `₹${data.amount / 100}`;
+        document.getElementById('totalAmount').textContent = `Rs.${data.amount / 100}`;
       }
     });
   </script>
@@ -478,7 +497,7 @@
           <h2>INVOICE</h2>
           <p>Thank you for your purchase</p>
         </div>
-        <img src="https://via.placeholder.com/120x60?text=AromaHut" alt="AromaHut Logo" class="invoice-logo">
+        <img src="img/aromahutlogo.png" alt="AromaHut Logo" class="invoice-logo">
       </div>
 
       <div class="invoice-details">
@@ -515,6 +534,15 @@
 
       <div class="invoice-total">
         <p>Total Amount: <span id="totalAmount"></span></p>
+      </div>
+
+      <div class="company-info">
+        <h3>AromaHut</h3>
+        <p>Bringing authentic homemade flavors to your kitchen since 2010. Our spices and masalas are crafted with traditional recipes and premium ingredients.</p>
+        <p><strong>Address:</strong> 70/36, Thiruvenkadam Street, Gugai, Salem – 636006, Tamil Nadu</p>
+        <p><strong>Phone:</strong> +91 9443383538</p>
+        <p><strong>Email:</strong> aromahut24@gmail.com</p>
+        <p><strong>Business Hours:</strong> Mon-Sat: 9AM - 6PM</p>
       </div>
 
       <div class="invoice-footer">
