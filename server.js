@@ -67,7 +67,6 @@ const orderSchema = new mongoose.Schema({
   packedToUser: { type: Boolean, default: false },
   sentToParcel: { type: Boolean, default: false },
   isParcelReady: { type: Boolean, default: false },
-  shippingFee: { type: Number, required: true, default: 0 },
 });
 const Order = mongoose.model('Order', orderSchema);
 
@@ -95,18 +94,34 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// Authentication Middleware
+const authenticateAdmin = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Unauthorized: No token provided' });
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded.isAdmin) {
+      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    }
+    req.user = decoded;
+    next();
+  } catch (error) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+  }
+};
+
+// Socket.io Connection
+io.on('connection', (socket) => {
+  console.log('✅ Client connected:', socket.id);
+  socket.on('disconnect', () => {
+    console.log('❌ Client disconnected:', socket.id);
+  });
+});
+
 // Utility Functions
-function calculateShippingFee(items) {
-  const totalWeight = items.reduce((sum, item) => {
-    // Convert weight to kg if needed (assuming weights are in grams)
-    const weight = item.productWeight ? parseFloat(item.productWeight) / 1000 : 0;
-    return sum + (weight * item.productQuantity);
-  }, 0);
-
-  // Calculate shipping fee: Rs.2 for each 1.1kg range
-  return Math.ceil((totalWeight + 0.1) / 1.1) * 2;
-}
-
 async function sendOrderEmail(order) {
   try {
     const transporter = nodemailer.createTransport({
@@ -117,14 +132,13 @@ async function sendOrderEmail(order) {
       },
     });
 
-    const subtotal = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0);
-    const totalAmount = subtotal + order.shippingFee;
+    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
     
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: order.buyerEmail,
       subject: 'Your AromaHut Order Confirmation',
-      html: buildOrderEmailHtml(order, subtotal, order.shippingFee, totalAmount),
+      html: buildOrderEmailHtml(order, totalAmount),
     };
 
     await transporter.sendMail(mailOptions);
@@ -134,7 +148,7 @@ async function sendOrderEmail(order) {
   }
 }
 
-function buildOrderEmailHtml(order, subtotal, shippingFee, totalAmount) {
+function buildOrderEmailHtml(order, totalAmount) {
   const itemsHtml = order.items.map(item => `
     <tr>
       <td style="padding: 8px; border: 1px solid #ddd;">${sanitizeHtml(item.productName)}</td>
@@ -163,21 +177,11 @@ function buildOrderEmailHtml(order, subtotal, shippingFee, totalAmount) {
         <tbody>
           ${itemsHtml}
         </tbody>
-        <tfoot>
-          <tr>
-            <td colspan="3" style="padding: 8px; border: 1px solid #ddd; text-align: right;">Subtotal:</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">₹${subtotal.toFixed(2)}</td>
-          </tr>
-          <tr>
-            <td colspan="3" style="padding: 8px; border: 1px solid #ddd; text-align: right;">Shipping:</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">₹${shippingFee.toFixed(2)}</td>
-          </tr>
-          <tr style="font-weight: bold;">
-            <td colspan="3" style="padding: 8px; border: 1px solid #ddd; text-align: right;">Total:</td>
-            <td style="padding: 8px; border: 1px solid #ddd;">₹${totalAmount.toFixed(2)}</td>
-          </tr>
-        </tfoot>
       </table>
+      
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <p style="margin: 0; font-weight: bold;">Order Total: ₹${totalAmount.toFixed(2)}</p>
+      </div>
       
       <h3 style="color: #4a6baf;">Shipping Information</h3>
       <p>${sanitizeHtml(order.buyerName)}<br>
@@ -204,13 +208,15 @@ async function generateProfessionalInvoice(order, res) {
   const margin = doc.page.margins.left;
   const tableWidth = pageWidth;
 
-  // Add AromaHut logo
+  // Add AromaHut logo (assuming you have a logo.png in your project)
   const logoPath = path.join(__dirname, 'logo.png');
   if (fs.existsSync(logoPath)) {
     doc.image(logoPath, margin + 400, 30, { width: 120, align: 'right' });
+  } else {
+    console.warn('Logo file not found at:', logoPath);
   }
 
-  // Header with company details
+  // 1. Header with company details
   doc.fillColor('#4a6baf')
      .fontSize(20)
      .text('AROMAHUT', margin, 30, { align: 'left' })
@@ -236,7 +242,7 @@ async function generateProfessionalInvoice(order, res) {
      })}`, margin + 350, 65, { align: 'right' })
      .moveDown();
 
-  // Buyer Info
+  // 2. Buyer Info
   doc.fontSize(10)
      .fillColor('#333333')
      .text('Bill To:', margin, 140)
@@ -258,7 +264,7 @@ async function generateProfessionalInvoice(order, res) {
      .lineWidth(1)
      .stroke();
 
-  // Items Table
+  // 3. Items Table
   const tableTop = 260;
   const itemCodeX = margin;
   const descriptionX = margin + 50;
@@ -314,22 +320,22 @@ async function generateProfessionalInvoice(order, res) {
   doc.fontSize(10)
      .text('Shipping Charges', descriptionX, y)
      .text('1', quantityX, y, { width: 50, align: 'right' })
-     .text(`₹${order.shippingFee.toFixed(2)}`, priceX, y, { width: 70, align: 'right' })
-     .text(`₹${order.shippingFee.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
+     .text('₹1.00', priceX, y, { width: 70, align: 'right' })
+     .text('₹1.00', amountX, y, { width: 80, align: 'right' });
 
-  const totalBeforeTax = subtotal + order.shippingFee;
+  subtotal += 1.00; // Add shipping
   y += 40;
 
   // Total Amount
   doc.fontSize(12)
      .font('Helvetica-Bold')
      .text('Subtotal:', amountX - 50, y, { width: 50, align: 'right' })
-     .text(`₹${totalBeforeTax.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
+     .text(`₹${subtotal.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
 
   // GST Calculation (assuming 5% GST)
   const gstRate = 0.05;
-  const gstAmount = totalBeforeTax * gstRate;
-  const grandTotal = totalBeforeTax + gstAmount;
+  const gstAmount = subtotal * gstRate;
+  const grandTotal = subtotal + gstAmount;
   
   y += 20;
   doc.fontSize(10)
@@ -342,7 +348,7 @@ async function generateProfessionalInvoice(order, res) {
      .text('Grand Total:', amountX - 50, y, { width: 50, align: 'right' })
      .text(`₹${grandTotal.toFixed(2)}`, amountX, y, { width: 80, align: 'right' });
 
-  // Payment Information
+  // 4. Payment Information
   y += 40;
   doc.fontSize(10)
      .fillColor('#4a6baf')
@@ -352,7 +358,7 @@ async function generateProfessionalInvoice(order, res) {
      .text('Payment Method: Online Payment (Razorpay)', margin, y + 35)
      .text('Payment Status: Paid', margin, y + 50);
 
-  // Footer with terms and conditions
+  // 5. Footer with terms and conditions
   y += 80;
   doc.fontSize(8)
      .fillColor('#4a6baf')
@@ -389,7 +395,144 @@ app.post('/admin/login', (req, res) => {
   res.status(401).json({ error: 'Invalid credentials' });
 });
 
-// ... [Keep all other existing routes the same, just update the verify-payment route below]
+app.get('/admin/orders', authenticateAdmin, async (req, res) => {
+  try {
+    const { status, startDate, endDate } = req.query;
+    const query = {};
+    if (status && ['Pending', 'Completed'].includes(status)) {
+      query.status = status;
+    }
+    if (startDate) {
+      query.createdAt = { $gte: new Date(startDate) };
+    }
+    if (endDate) {
+      query.createdAt = {
+        ...query.createdAt,
+        $lte: new Date(new Date(endDate).setHours(23, 59, 59, 999)),
+      };
+    }
+    const orders = await Order.find(query).sort({ createdAt: -1 }).lean();
+    res.status(200).json({ status: 'success', data: orders });
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Failed to fetch orders', details: error.message });
+  }
+});
+
+app.post('/admin/order-status', authenticateAdmin, async (req, res) => {
+  const { orderId, step, completed } = req.body;
+  if (!orderId || !step || typeof completed !== 'boolean') {
+    return res.status(400).json({ error: 'Missing required fields' });
+  }
+  const validSteps = ['packet_success', 'packed_to_user', 'sent_to_parcel'];
+  if (!validSteps.includes(step)) {
+    return res.status(400).json({ error: 'Invalid step value' });
+  }
+  try {
+    const order = await Order.findOne({ razorpayOrderId: orderId });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    const stepFieldMap = {
+      packet_success: 'packetSuccess',
+      packed_to_user: 'packedToUser',
+      sent_to_parcel: 'sentToParcel',
+    };
+    order[stepFieldMap[step]] = completed;
+    if (order.packetSuccess && order.packedToUser && order.sentToParcel) {
+      order.status = 'Completed';
+    } else {
+      order.status = 'Pending';
+    }
+    await order.save();
+    io.emit('orderUpdated', {
+      orderId: order.razorpayOrderId,
+      status: order.status,
+      packetSuccess: order.packetSuccess,
+      packedToUser: order.packedToUser,
+      sentToParcel: order.sentToParcel,
+    });
+    res.status(200).json({ status: 'success', message: 'Order status updated' });
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    res.status(500).json({ error: 'Failed to update order status', details: error.message });
+  }
+});
+
+app.get('/admin/order/:id', authenticateAdmin, async (req, res) => {
+  try {
+    const order = await Order.findOne({ razorpayOrderId: req.params.id }).lean();
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    res.status(200).json({ status: 'success', data: order });
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    res.status(500).json({ error: 'Failed to fetch order', details: error.message });
+  }
+});
+
+app.get('/admin/products', authenticateAdmin, async (req, res) => {
+  try {
+    const products = await Product.find().sort({ updatedAt: -1 }).lean();
+    res.status(200).json({ status: 'success', data: products });
+  } catch (error) {
+    console.error('Error fetching products:', error);
+    res.status(500).json({ error: 'Failed to fetch products', details: error.message });
+  }
+});
+
+app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
+  try {
+    const order = await Order.findOne({ razorpayOrderId: req.params.orderId });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    await generateProfessionalInvoice(order, res);
+  } catch (error) {
+    console.error('Error generating invoice:', error);
+    res.status(500).json({ error: 'Failed to generate invoice', details: error.message });
+  }
+});
+
+app.post('/create-order', async (req, res) => {
+  const { amount, items } = req.body;
+  if (!amount || isNaN(amount) || amount < 100) {
+    return res.status(400).json({ error: 'Invalid amount: Must be a number ≥ ₹1 (100 paise)' });
+  }
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'Invalid items: Must be a non-empty array' });
+  }
+  
+  let calculatedAmount = 0;
+  for (const item of items) {
+    if (!item.name || !item.quantity || isNaN(item.price) || item.quantity < 1 || item.price < 0) {
+      return res.status(400).json({ error: 'Invalid item: Must include name, quantity (≥1), and price (≥0)' });
+    }
+    calculatedAmount += item.price * item.quantity;
+  }
+  
+  calculatedAmount += 1.00;
+  calculatedAmount = Math.round(calculatedAmount * 100);
+  
+  if (calculatedAmount !== amount) {
+    return res.status(400).json({ error: `Amount mismatch: Expected ${calculatedAmount} paise, received ${amount} paise` });
+  }
+
+  const options = {
+    amount: amount,
+    currency: 'INR',
+    receipt: `receipt_order_${Date.now()}`,
+  };
+
+  try {
+    const order = await razorpay.orders.create(options);
+    res.json(order);
+  } catch (err) {
+    console.error('Razorpay Order Error:', err);
+    res.status(500).json({ error: 'Failed to create order', details: err.description || err.message });
+  }
+});
 
 app.post('/verify-payment', async (req, res) => {
   const {
@@ -401,7 +544,6 @@ app.post('/verify-payment', async (req, res) => {
     buyerPhone,
     buyerAddress,
     items,
-    shippingFee
   } = req.body;
 
   // Validate required fields
@@ -436,8 +578,6 @@ app.post('/verify-payment', async (req, res) => {
 
   try {
     const addressParts = sanitizedBuyerAddress.split(', ');
-    const calculatedShippingFee = calculateShippingFee(items);
-    
     const orderData = {
       buyerName: sanitizedBuyerName,
       buyerEmail: sanitizedBuyerEmail,
@@ -453,7 +593,6 @@ app.post('/verify-payment', async (req, res) => {
       })),
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
-      shippingFee: calculatedShippingFee
     };
 
     const order = new Order(orderData);
@@ -467,7 +606,75 @@ app.post('/verify-payment', async (req, res) => {
   }
 });
 
-// ... [Keep all other existing routes and the server startup code the same]
+app.post('/submit-feedback', async (req, res) => {
+  const { orderId, paymentId, rating, comment } = req.body;
+  try {
+    if (!orderId || !paymentId) {
+      return res.status(400).json({ error: 'Order ID and Payment ID are required' });
+    }
+    if (!rating && !comment) {
+      return res.status(400).json({ error: 'Rating or comment is required' });
+    }
+    if (comment && comment.length < 3) {
+      return res.status(400).json({ error: 'Comment must be at least 3 characters long' });
+    }
+
+    const feedback = new Feedback({
+      orderId,
+      paymentId,
+      rating: rating ? parseInt(rating, 10) : undefined,
+      comment: comment ? sanitizeHtml(comment) : undefined,
+    });
+
+    await feedback.save();
+    res.status(200).json({ message: 'Feedback submitted successfully' });
+  } catch (error) {
+    console.error('Error saving feedback:', error);
+    res.status(500).json({ error: 'Failed to save feedback', details: error.message });
+  }
+});
+
+app.get('/get-order', async (req, res) => {
+  const { orderId, paymentId } = req.query;
+  try {
+    if (!orderId || !paymentId) {
+      return res.status(400).json({ error: 'Order ID and Payment ID are required' });
+    }
+
+    const order = await Order.findOne({
+      razorpayOrderId: orderId,
+      razorpayPaymentId: paymentId,
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
+    const response = {
+      id: order.razorpayOrderId,
+      paymentId: order.razorpayPaymentId,
+      amount: Math.round(totalAmount * 100),
+      buyer: {
+        name: order.buyerName,
+        email: order.buyerEmail,
+        phone: order.buyerPhone,
+        address: [order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', '),
+      },
+      items: order.items.map(item => ({
+        name: item.productName,
+        weight: item.productWeight || '',
+        quantity: item.productQuantity,
+        price: item.productPrice,
+      })),
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error('Error fetching order:', error);
+    res.status(500).json({ error: 'Failed to fetch order', details: error.message });
+  }
+});
 
 // Error Handling Middleware
 app.use((err, req, res, next) => {
