@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Thank You - AromaHut</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
     :root {
       --primary-orange: #ff6b00;
@@ -53,7 +53,7 @@
 
     .feedback-section, .invoice-section {
       margin: 30px auto;
-      max-width: 600px;
+      max-width: 700px;
     }
 
     .emoji-rating {
@@ -121,30 +121,35 @@
       display: none;
       text-align: left;
       border: 1px solid var(--medium-gray);
-      padding: 20px;
-      border-radius: 10px;
+      padding: 30px;
+      border-radius: 12px;
+      background-color: #fff;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.05);
     }
 
     .invoice-section h2 {
       font-size: 1.8rem;
       color: var(--primary-orange);
-      margin-bottom: 20px;
+      margin-bottom: 25px;
+      border-bottom: 2px solid var(--primary-orange);
+      padding-bottom: 10px;
     }
 
     .invoice-section p {
       font-size: 1rem;
       color: var(--dark-gray);
-      margin: 5px 0;
+      margin: 8px 0;
+      line-height: 1.6;
     }
 
     .invoice-section table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
+      margin-top: 20px;
     }
 
     .invoice-section th, .invoice-section td {
-      padding: 10px;
+      padding: 12px;
       border: 1px solid var(--medium-gray);
       text-align: left;
     }
@@ -152,6 +157,22 @@
     .invoice-section th {
       background: var(--spice-gradient);
       color: white;
+      font-weight: 600;
+    }
+
+    .invoice-section td:last-child, 
+    .invoice-section th:last-child {
+      text-align: right;
+    }
+
+    #totalAmount {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: var(--primary-orange);
+    }
+
+    #downloadInvoice {
+      margin-top: 20px;
     }
 
     .animate-fadeIn {
@@ -176,153 +197,13 @@
         margin: 10px;
         padding: 15px;
       }
+
+      .invoice-section {
+        padding: 20px;
+      }
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script>
-    const API_BASE_URL = 'https://aromahut-1.onrender.com'; // Update this to your actual API base URL
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const orderId = urlParams.get('orderId');
-      const paymentId = urlParams.get('paymentId');
-      let orderData = null;
-
-      if (orderId && paymentId) {
-        fetchOrderDetails(orderId, paymentId);
-      } else {
-        showInvoiceSection();
-      }
-
-      // Emoji rating selection
-      document.querySelectorAll('.emoji-rating i').forEach(emoji => {
-        emoji.addEventListener('click', () => {
-          document.querySelectorAll('.emoji-rating i').forEach(e => e.classList.remove('selected'));
-          emoji.classList.add('selected');
-        });
-      });
-
-      // Submit feedback
-      document.getElementById('submitFeedback').addEventListener('click', async () => {
-        const rating = document.querySelector('.emoji-rating i.selected');
-        const comment = document.getElementById('comment').value.trim();
-
-        if (!rating && !comment) {
-          alert('Please provide a rating or comment before submitting.');
-          return;
-        }
-
-        const feedback = {
-          orderId: orderId || '',
-          paymentId: paymentId || '',
-          rating: rating ? rating.dataset.rating : null,
-          comment: comment || null,
-          createdAt: new Date().toISOString(),
-        };
-
-        try {
-          const response = await fetch(`${API_BASE_URL}/submit-feedback`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(feedback),
-          });
-
-          if (!response.ok) throw new Error('Failed to submit feedback');
-          showInvoiceSection();
-        } catch (error) {
-          console.error('Error submitting feedback:', error);
-          alert('Failed to submit feedback. Please try again.');
-        }
-      });
-
-      // Skip feedback
-      document.getElementById('skipFeedback').addEventListener('click', () => {
-        showInvoiceSection();
-      });
-
-      // Download PDF
-      document.getElementById('downloadInvoice').addEventListener('click', () => {
-        if (!orderData) {
-          alert('Order details not available.');
-          return;
-        }
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        doc.setFontSize(20);
-        doc.text('AromaHut Invoice', 20, 20);
-
-        doc.setFontSize(12);
-        doc.text(`Invoice Date: ${new Date().toLocaleString()}`, 20, 30);
-        doc.text(`Customer Name: ${orderData.buyer.name}`, 20, 40);
-        doc.text(`Email: ${orderData.buyer.email}`, 20, 50);
-        doc.text(`Phone: ${orderData.buyer.phone}`, 20, 60);
-        doc.text(`Address: ${orderData.buyer.address}`, 20, 70);
-        doc.text(`Order ID: ${orderData.id}`, 20, 80);
-        doc.text(`Payment ID: ${orderData.paymentId}`, 20, 90);
-
-        doc.text('Items:', 20, 100);
-        let y = 110;
-        orderData.items.forEach((item, index) => {
-          doc.text(`${index + 1}. ${item.name} (Qty: ${item.quantity}) - ₹${item.price}`, 20, y);
-          y += 10;
-        });
-
-        doc.text(`Total Amount: ₹${orderData.amount / 100}`, 20, y + 10);
-
-        doc.save(`AromaHut_Invoice_${orderData.id}.pdf`);
-
-        // Redirect to homepage after download
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 1000);
-      });
-
-      function showInvoiceSection() {
-        document.querySelector('.feedback-section').style.display = 'none';
-        document.querySelector('.invoice-section').style.display = 'block';
-      }
-
-      async function fetchOrderDetails(orderId, paymentId) {
-        try {
-          const response = await fetch(`${API_BASE_URL}/get-order?orderId=${orderId}&paymentId=${paymentId}`);
-          if (!response.ok) throw new Error('Failed to fetch order details');
-          orderData = await response.json();
-          populateInvoice(orderData);
-        } catch (error) {
-          console.error('Error fetching order details:', error);
-          alert('Failed to fetch order details. You can still download the invoice or contact support.');
-        } finally {
-          // Don't show invoice until feedback is submitted or skipped
-        }
-      }
-
-      function populateInvoice(data) {
-        document.getElementById('invoiceDate').textContent = new Date().toLocaleString();
-        document.getElementById('customerName').textContent = data.buyer.name.toUpperCase();
-        document.getElementById('customerEmail').textContent = data.buyer.email;
-        document.getElementById('customerPhone').textContent = data.buyer.phone;
-        document.getElementById('customerAddress').textContent = data.buyer.address.toUpperCase();
-        document.getElementById('orderId').textContent = data.id;
-        document.getElementById('paymentId').textContent = data.paymentId;
-
-        const itemsTable = document.getElementById('invoiceItems');
-        data.items.forEach(item => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${item.name}</td>
-            <td>${item.quantity}</td>
-            <td>₹${item.price}</td>
-            <td>₹${item.price * item.quantity}</td>
-          `;
-          itemsTable.appendChild(row);
-        });
-
-        document.getElementById('totalAmount').textContent = `₹${data.amount / 100}`;
-      }
-    });
-  </script>
 </head>
 <body>
   <div class="container animate-fadeIn">
@@ -368,5 +249,144 @@
       <button id="downloadInvoice" class="btn btn-primary">Download Invoice as PDF</button>
     </div>
   </div>
+
+  <script>
+    const API_BASE_URL = 'https://aromahut-1.onrender.com';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get('orderId');
+      const paymentId = urlParams.get('paymentId');
+      let orderData = null;
+
+      if (orderId && paymentId) {
+        fetchOrderDetails(orderId, paymentId);
+      } else {
+        showInvoiceSection();
+      }
+
+      document.querySelectorAll('.emoji-rating i').forEach(emoji => {
+        emoji.addEventListener('click', () => {
+          document.querySelectorAll('.emoji-rating i').forEach(e => e.classList.remove('selected'));
+          emoji.classList.add('selected');
+        });
+      });
+
+      document.getElementById('submitFeedback').addEventListener('click', async () => {
+        const rating = document.querySelector('.emoji-rating i.selected');
+        const comment = document.getElementById('comment').value.trim();
+
+        if (!rating && !comment) {
+          alert('Please provide a rating or comment before submitting.');
+          return;
+        }
+
+        const feedback = {
+          orderId: orderId || '',
+          paymentId: paymentId || '',
+          rating: rating ? rating.dataset.rating : null,
+          comment: comment || null,
+          createdAt: new Date().toISOString(),
+        };
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/submit-feedback`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(feedback),
+          });
+
+          if (!response.ok) throw new Error('Failed to submit feedback');
+          showInvoiceSection();
+        } catch (error) {
+          console.error('Error submitting feedback:', error);
+          alert('Failed to submit feedback. Please try again.');
+        }
+      });
+
+      document.getElementById('skipFeedback').addEventListener('click', () => {
+        showInvoiceSection();
+      });
+
+      document.getElementById('downloadInvoice').addEventListener('click', () => {
+        if (!orderData) {
+          alert('Order details not available.');
+          return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(20);
+        doc.text('AromaHut Invoice', 20, 20);
+
+        doc.setFontSize(12);
+        doc.text(`Invoice Date: ${new Date().toLocaleString()}`, 20, 30);
+        doc.text(`Customer Name: ${orderData.buyer.name}`, 20, 40);
+        doc.text(`Email: ${orderData.buyer.email}`, 20, 50);
+        doc.text(`Phone: ${orderData.buyer.phone}`, 20, 60);
+        doc.text(`Address: ${orderData.buyer.address}`, 20, 70);
+        doc.text(`Order ID: ${orderData.id}`, 20, 80);
+        doc.text(`Payment ID: ${orderData.paymentId}`, 20, 90);
+
+        doc.text('Items:', 20, 100);
+        let y = 110;
+        orderData.items.forEach((item, index) => {
+          doc.text(`${index + 1}. ${item.name} (Qty: ${item.quantity}) - ₹${item.price}`, 20, y);
+          y += 10;
+        });
+
+        doc.text(`Total Amount: ₹${orderData.amount / 100}`, 20, y + 10);
+
+        doc.save(`AromaHut_Invoice_${orderData.id}.pdf`);
+
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 1000);
+      });
+
+      function showInvoiceSection() {
+        document.querySelector('.feedback-section').style.display = 'none';
+        document.querySelector('.invoice-section').style.display = 'block';
+      }
+
+      async function fetchOrderDetails(orderId, paymentId) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/get-order?orderId=${orderId}&paymentId=${paymentId}`);
+          if (!response.ok) throw new Error('Failed to fetch order details');
+          orderData = await response.json();
+          populateInvoice(orderData);
+        } catch (error) {
+          console.error('Error fetching order details:', error);
+          alert('Failed to fetch order details. You can still download the invoice or contact support.');
+        }
+      }
+
+      function populateInvoice(data) {
+        document.getElementById('invoiceDate').textContent = new Date().toLocaleString();
+        document.getElementById('customerName').textContent = data.buyer.name.toUpperCase();
+        document.getElementById('customerEmail').textContent = data.buyer.email;
+        document.getElementById('customerPhone').textContent = data.buyer.phone;
+        document.getElementById('customerAddress').textContent = data.buyer.address.toUpperCase();
+        document.getElementById('orderId').textContent = data.id;
+        document.getElementById('paymentId').textContent = data.paymentId;
+
+        const itemsTable = document.getElementById('invoiceItems');
+        itemsTable.innerHTML = '';
+        data.items.forEach(item => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${item.name}</td>
+            <td>${item.quantity}</td>
+            <td>₹${item.price}</td>
+            <td>₹${item.price * item.quantity}</td>
+          `;
+          itemsTable.appendChild(row);
+        });
+
+        document.getElementById('totalAmount').textContent = `₹${data.amount / 100}`;
+      }
+    });
+  </script>
 </body>
 </html>
