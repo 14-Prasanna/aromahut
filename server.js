@@ -19,7 +19,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: 'http://127.0.0.1:5500',
+    origin: 'https://www.aromahut.in',
     methods: ['GET', 'POST'],
   },
 });
@@ -28,7 +28,7 @@ const io = new Server(server, {
 app.use(express.json());
 
 app.use(cors({
-  origin: 'http://127.0.0.1:5500',
+  origin: 'https://www.aromahut.in',
 }));
 
 app.use(rateLimit({
