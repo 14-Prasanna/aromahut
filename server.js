@@ -1,4 +1,3 @@
-// server.js (Server-Side)
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -13,7 +12,7 @@ const cron = require('node-cron');
 const { Server } = require('socket.io');
 const http = require('http');
 const PDFDocument = require('pdfkit');
-const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
@@ -27,9 +26,11 @@ const io = new Server(server, {
 
 // Middleware
 app.use(express.json());
+
 app.use(cors({
   origin: 'https://www.aromahut.in',
 }));
+
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -59,8 +60,6 @@ const orderSchema = new mongoose.Schema({
   }],
   razorpayOrderId: { type: String, required: true, unique: true },
   razorpayPaymentId: { type: String, required: true, unique: true },
-  shippingFee: { type: Number, required: true, min: 0 },
-  gst: { type: Number, required: true, min: 0 },
   createdAt: { type: Date, default: Date.now },
   status: { type: String, enum: ['Pending', 'Completed'], default: 'Pending' },
   packetSuccess: { type: Boolean, default: false },
@@ -206,8 +205,6 @@ app.get('/admin/order/:id', async (req, res) => {
         address: [order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', '),
       },
       items: order.items,
-      shippingFee: order.shippingFee,
-      gst: order.gst,
       createdAt: order.createdAt,
       status: order.status,
       steps: {
@@ -347,8 +344,6 @@ app.get('/test-email', async (req, res) => {
       buyerName: 'Test User',
       buyerAddress: '123 Test Street, Test City, 123456',
       items: [{ productName: 'Test Product', productPrice: 100, productQuantity: 1 }],
-      shippingFee: 40,
-      gst: 7,
     });
     res.status(200).json({ message: 'Test email sent successfully!' });
   } catch (error) {
@@ -358,7 +353,7 @@ app.get('/test-email', async (req, res) => {
 });
 
 app.post('/create-order', async (req, res) => {
-  const { amount, items, shippingFee } = req.body;
+  const { amount, items, shippingFee, gst } = req.body;
   if (!amount || isNaN(amount) || amount < 100) {
     return res.status(400).json({ error: 'Invalid amount: Must be a number ≥ ₹1 (100 paise)' });
   }
@@ -368,6 +363,10 @@ app.post('/create-order', async (req, res) => {
   if (!shippingFee || isNaN(shippingFee) || shippingFee < 0) {
     return res.status(400).json({ error: 'Invalid shippingFee: Must be a number ≥ 0' });
   }
+  if (!gst || isNaN(gst) || gst < 0) {
+    return res.status(400).json({ error: 'Invalid GST: Must be a number ≥ 0' });
+  }
+
   let subtotal = 0;
   for (const item of items) {
     if (!item.name || !item.quantity || isNaN(item.price) || item.quantity < 1 || item.price < 0) {
@@ -375,18 +374,21 @@ app.post('/create-order', async (req, res) => {
     }
     subtotal += item.price * item.quantity;
   }
-  const gstRate = 0.05; // 5% GST
-  const gst = (subtotal + shippingFee) * gstRate;
+
+  // Calculate total including shippingFee and GST
   const calculatedTotal = subtotal + shippingFee + gst;
   const calculatedAmount = Math.round(calculatedTotal * 100);
+
   if (calculatedAmount !== amount) {
     return res.status(400).json({ error: `Amount mismatch: Expected ${calculatedAmount} paise, received ${amount} paise` });
   }
+
   const options = {
-    amount: calculatedAmount,
+    amount: amount,
     currency: 'INR',
     receipt: `receipt_order_${Date.now()}`,
   };
+
   try {
     const order = await razorpay.orders.create(options);
     res.json(order);
@@ -406,14 +408,10 @@ app.post('/verify-payment', async (req, res) => {
     buyerPhone,
     buyerAddress,
     items,
-    shippingFee,
-    gst,
   } = req.body;
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature ||
-      !buyerName || !buyerEmail || !buyerPhone || !buyerAddress || !items || !Array.isArray(items) || items.length === 0 ||
-      !shippingFee || isNaN(shippingFee) || shippingFee < 0 ||
-      !gst || isNaN(gst) || gst < 0) {
-    return res.status(400).json({ status: 'failed', error: 'Missing or invalid required fields' });
+      !buyerName || !buyerEmail || !buyerPhone || !buyerAddress || !items || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ status: 'failed', error: 'Missing required fields' });
   }
   const sanitizedBuyerName = sanitizeHtml(buyerName);
   const sanitizedBuyerEmail = sanitizeHtml(buyerEmail);
@@ -449,8 +447,6 @@ app.post('/verify-payment', async (req, res) => {
       })),
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
-      shippingFee: parseFloat(shippingFee),
-      gst: parseFloat(gst),
     };
     const order = new Order(orderData);
     await order.save();
@@ -501,8 +497,7 @@ app.get('/get-order', async (req, res) => {
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
-    const subtotal = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0);
-    const totalAmount = subtotal + order.shippingFee + order.gst;
+    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
     const response = {
       id: order.razorpayOrderId,
       paymentId: order.razorpayPaymentId,
@@ -519,8 +514,6 @@ app.get('/get-order', async (req, res) => {
         quantity: item.productQuantity,
         price: item.productPrice,
       })),
-      shippingFee: order.shippingFee,
-      gst: order.gst,
     };
     res.status(200).json(response);
   } catch (error) {
@@ -538,8 +531,7 @@ async function sendOrderEmail(order) {
         pass: 'zrbh uuok rhqe gyoi',
       },
     });
-    const subtotal = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0);
-    const totalAmount = subtotal + order.shippingFee + order.gst;
+    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
     const itemsHtml = order.items.map(item => `
       <tr>
         <td style="padding: 8px; border: 1px solid #ddd;">${sanitizeHtml(item.productName)}</td>
@@ -571,10 +563,7 @@ async function sendOrderEmail(order) {
               ${itemsHtml}
             </tbody>
           </table>
-          <p style="margin-top: 20px;"><strong>Subtotal:</strong> ₹${subtotal.toFixed(2)}</p>
-          <p><strong>Shipping:</strong> ₹${order.shippingFee.toFixed(2)}</p>
-          <p><strong>GST (5%):</strong> ₹${order.gst.toFixed(2)}</p>
-          <p><strong>Total:</strong> ₹${totalAmount.toFixed(2)}</p>
+          <p style="margin-top: 20px;"><strong>Total (including ₹1.00 shipping):</strong> ₹${totalAmount.toFixed(2)}</p>
           <h3>Shipping To</h3>
           <p>${sanitizeHtml(order.buyerName.toUpperCase())}</p>
           <p>${sanitizeHtml([order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', ').toUpperCase())}</p>
@@ -590,6 +579,7 @@ async function sendOrderEmail(order) {
   }
 }
 
+// New endpoint to download PDF invoice
 app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
   try {
     const order = await Order.findOne({ razorpayOrderId: req.params.orderId });
@@ -600,28 +590,35 @@ app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
     const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const filename = `invoice_${order.razorpayOrderId}.pdf`;
 
+    // Set response headers for PDF download
     res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-type', 'application/pdf');
 
+    // Pipe PDF to response
     doc.pipe(res);
 
+    // Add logo to top-left corner
     const logoPath = path.join(__dirname, 'public', 'img', 'aromahutTitleIcon.png');
     doc.image(logoPath, 50, 50, { width: 80 });
 
+    // Fonts and styling
     doc.font('Helvetica');
 
+    // Seller Information
     doc.fontSize(16).fillColor('#003366').text('Spice World Enterprises', { align: 'center' });
     doc.fontSize(10).fillColor('black');
     doc.text('No. 45, Spice Lane, Salem - 636007, Tamil Nadu, India', { align: 'center' });
     doc.text('GSTIN: 33ABCDE1234F125 | Phone: +91-98765-43210 | Email: sales@spiceworld.com', { align: 'center' });
     doc.moveDown(1);
 
+    // Invoice Title and Details
     doc.fontSize(14).fillColor('#003366').text('INVOICE', { align: 'center' });
     doc.fontSize(10).fillColor('black');
     doc.text(`Invoice No: INV-${order.razorpayOrderId.slice(0, 8)}`, { align: 'left' });
     doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString('en-IN')}`, { align: 'left' });
     doc.moveDown(1);
 
+    // Buyer Information
     doc.fontSize(12).fillColor('black').text('Bill To:', { align: 'left' });
     doc.fontSize(10);
     doc.text(order.buyerName, { align: 'left' });
@@ -630,9 +627,11 @@ app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
     doc.text(`Email: ${order.buyerEmail}`, { align: 'left' });
     doc.moveDown(1);
 
+    // Items Table
     doc.fontSize(12).text('Items:', { align: 'left' });
     doc.fontSize(10);
 
+    // Table header
     const tableTop = doc.y + 10;
     const tableX = 50;
     doc.font('Helvetica-Bold');
@@ -644,8 +643,9 @@ app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
     doc.moveDown(0.5);
     doc.lineWidth(1).moveTo(tableX, doc.y).lineTo(tableX + 540, doc.y).stroke();
 
+    // Table rows
     doc.font('Helvetica');
-    let subtotal = 0;
+    let totalAmount = 0;
     order.items.forEach((item, index) => {
       const rowY = doc.y + 10;
       doc.text(item.productName, tableX, rowY, { width: 200 });
@@ -654,31 +654,31 @@ app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
       doc.text(`₹${item.productPrice.toFixed(2)}`, tableX + 380, rowY, { width: 80, align: 'right' });
       const itemTotal = item.productPrice * item.productQuantity;
       doc.text(`₹${itemTotal.toFixed(2)}`, tableX + 460, rowY, { width: 80, align: 'right' });
-      subtotal += itemTotal;
+      totalAmount += itemTotal;
       doc.moveDown(0.5);
       doc.lineWidth(0.5).moveTo(tableX, doc.y).lineTo(tableX + 540, doc.y).stroke();
     });
 
+    // Totals
     const subtotalY = doc.y + 10;
+    totalAmount += 1.00; // Adding shipping
     doc.text('Subtotal', tableX + 380, subtotalY, { width: 80, align: 'right' });
-    doc.text(`₹${subtotal.toFixed(2)}`, tableX + 460, subtotalY, { width: 80, align: 'right' });
+    doc.text(`₹${(totalAmount - 1).toFixed(2)}`, tableX + 460, subtotalY, { width: 80, align: 'right' });
     doc.moveDown(0.5);
     doc.text('Shipping', tableX + 380, doc.y, { width: 80, align: 'right' });
-    doc.text(`₹${order.shippingFee.toFixed(2)}`, tableX + 460, doc.y, { width: 80, align: 'right' });
-    doc.moveDown(0.5);
-    doc.text('GST (5%)', tableX + 380, doc.y, { width: 80, align: 'right' });
-    doc.text(`₹${order.gst.toFixed(2)}`, tableX + 460, doc.y, { width: 80, align: 'right' });
+    doc.text('₹1.00', tableX + 460, doc.y, { width: 80, align: 'right' });
     doc.moveDown(0.5);
     doc.lineWidth(1).moveTo(tableX, doc.y).lineTo(tableX + 540, doc.y).stroke();
     doc.font('Helvetica-Bold');
-    const totalAmount = subtotal + order.shippingFee + order.gst;
     doc.text('Total', tableX + 380, doc.y + 10, { width: 80, align: 'right' });
     doc.text(`₹${totalAmount.toFixed(2)}`, tableX + 460, doc.y + 10, { width: 80, align: 'right' });
 
+    // Footer
     doc.moveDown(2);
     doc.fontSize(10).text('Thank you for your business!', { align: 'center' });
     doc.text('For any inquiries, please contact us at sales@spiceworld.com.', { align: 'center' });
 
+    // Finalize PDF
     doc.end();
   } catch (error) {
     console.error('Error generating invoice:', error.message, error.stack);
