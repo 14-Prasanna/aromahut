@@ -1350,146 +1350,154 @@ window.changeQuantity = function (index, change) {
     }
 
     async function processPayment() {
-        const $spinner = $('#spinner');
-        if ($spinner.length) {
-            $spinner.addClass('show');
-        }
-
-        const $firstName = $('input[name="first-name"]');
-        const $lastName = $('input[name="last-name"]');
-        const $email = $('input[name="email-id"]');
-        const $phone = $('input[name="phone-no"]');
-        const $address = $('input[name="address"]');
-        const $city = $('select[name="town-city"]');
-        const $postalCode = $('input[name="postcode"]');
-        const $state = $('select[name="state"]');
-
-        if (!($firstName.length && $lastName.length && $email.length && $phone.length && 
-              $address.length && $city.length && $postalCode.length && $state.length)) {
-            console.error('One or more form fields are missing');
-            alert('Please fill out all required fields.');
-            if ($spinner.length) $spinner.removeClass('show');
-            return;
-        }
-
-        const firstName = $firstName.val().trim();
-        const lastName = $lastName.val().trim();
-        const email = $email.val().trim();
-        const phone = $phone.val().trim();
-        const address = $address.val().trim();
-        const city = $city.val().trim();
-        const postalCode = $postalCode.val().trim();
-        const state = $state.val().trim();
-
-        if (!city) {
-            alert('Please select a city');
-            if ($spinner.length) $spinner.removeClass('show');
-            return;
-        }
-
-        const fullAddress = `${address}, ${city}, ${postalCode}, ${state}`;
-        const totalAmount = parseFloat(localStorage.getItem('total')) || 0;
-        const amountInPaise = Math.round(totalAmount * 100);
-
-        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-
-        if (cartItems.length === 0) {
-            alert('Your cart is empty. Please add items to your cart and try again.');
-            if ($spinner.length) $spinner.removeClass('show');
-            return;
-        }
-
-        if (totalAmount <= 0) {
-            alert('The total amount is invalid. Please ensure your cart has items and try again.');
-            if ($spinner.length) $spinner.removeClass('show');
-            return;
-        }
-
-        if (amountInPaise < 100) {
-            alert('The total amount must be at least ₹1. Please add more items to your cart.');
-            if ($spinner.length) $spinner.removeClass('show');
-            return;
-        }
-
-        const orderData = {
-            amount: amountInPaise,
-            currency: 'INR',
-            buyerName: `${firstName} ${lastName}`,
-            buyerEmail: email,
-            buyerPhone: phone,
-            buyerAddress: fullAddress,
-            items: cartItems.map(item => ({
-                name: item.name,
-                weight: item.weight,
-                quantity: item.quantity || 1,
-                price: parseFloat(item.price)
-            })),
-            shippingFee: parseFloat(localStorage.getItem('shippingFee')) || 0,
-            gst: (totalAmount - (parseFloat(localStorage.getItem('shippingFee')) || 0) * 0.05
-        )};
-
-        try {
-            // Wait for Razorpay SDK to load
-            console.log('Waiting for Razorpay SDK to load...');
-            await waitForRazorpay();
-
-            console.log('Making API call to create order...');
-            const response = await fetch(`${API_BASE_URL}/create-order`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ amount: amountInPaise, items: orderData.items })
-            });
-
-            if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'Failed to create order');
-            }
-
-            const order = await response.json();
-
-            const options = {
-                key: 'rzp_live_adGv4HqiAU33pO',
-                amount: order.amount,
-                currency: 'INR',
-                name: 'Aromahut',
-                description: 'Order Payment',
-                image: 'https://via.placeholder.com/150',
-                order_id: order.id,
-                handler: function (response) {
-                    handlePaymentSuccess(response, orderData);
-                },
-                prefill: {
-                    name: orderData.buyerName,
-                    email: orderData.buyerEmail,
-                    contact: orderData.buyerPhone
-                },
-                notes: {
-                    address: orderData.buyerAddress
-                },
-                theme: { color: '#ff6b00' },
-                modal: {
-                    ondismiss: function () {
-                        if ($spinner.length) $spinner.removeClass('show');
-                    }
-                }
-            };
-
-            console.log('Initializing Razorpay with options:', options);
-            const rzp1 = new Razorpay(options);
-            rzp1.on('payment.failed', function (response) {
-                console.error('Razorpay payment failed:', response.error);
-                alert(`Payment failed: ${response.error.description}. Please try again.`);
-                if ($spinner.length) $spinner.removeClass('show');
-            });
-            rzp1.open();
-
-            if ($spinner.length) $spinner.removeClass('show');
-        } catch (error) {
-            console.error('Error in processPayment:', error.message);
-            alert(`Payment failed: ${error.message}. Please try again or contact support.`);
-            if ($spinner.length) $spinner.removeClass('show');
-        }
+    const $spinner = $('#spinner');
+    if ($spinner.length) {
+        $spinner.addClass('show');
     }
+
+    const $firstName = $('input[name="first-name"]');
+    const $lastName = $('input[name="last-name"]');
+    const $email = $('input[name="email-id"]');
+    const $phone = $('input[name="phone-no"]');
+    const $address = $('input[name="address"]');
+    const $city = $('select[name="town-city"]');
+    const $postalCode = $('input[name="postcode"]');
+    const $state = $('select[name="state"]');
+
+    if (!($firstName.length && $lastName.length && $email.length && $phone.length && 
+          $address.length && $city.length && $postalCode.length && $state.length)) {
+        console.error('One or more form fields are missing');
+        alert('Please fill out all required fields.');
+        if ($spinner.length) $spinner.removeClass('show');
+        return;
+    }
+
+    const firstName = $firstName.val().trim();
+    const lastName = $lastName.val().trim();
+    const email = $email.val().trim();
+    const phone = $phone.val().trim();
+    const address = $address.val().trim();
+    const city = $city.val().trim() === 'other' ? $('#custom-city-input').val().trim() : $city.val().trim();
+    const postalCode = $postalCode.val().trim();
+    const state = $state.val().trim();
+
+    if (!city) {
+        alert('Please select a city');
+        if ($spinner.length) $spinner.removeClass('show');
+        return;
+    }
+
+    const fullAddress = `${address}, ${city}, ${postalCode}, ${state}`;
+    const totalAmount = parseFloat(localStorage.getItem('total')) || 0;
+    const amountInPaise = Math.round(totalAmount * 100);
+    const shippingFee = parseFloat(localStorage.getItem('shippingFee')) || 0;
+    const subtotal = parseFloat(updateSubtotal()) || 0;
+    const gstRate = 0.05; // 5% GST
+    const gstAmount = (subtotal + shippingFee) * gstRate;
+
+    const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+
+    if (cartItems.length === 0) {
+        alert('Your cart is empty. Please add items to your cart and try again.');
+        if ($spinner.length) $spinner.removeClass('show');
+        return;
+    }
+
+    if (totalAmount <= 0) {
+        alert('The total amount is invalid. Please ensure your cart has items and try again.');
+        if ($spinner.length) $spinner.removeClass('show');
+        return;
+    }
+
+    if (amountInPaise < 100) {
+        alert('The total amount must be at least ₹1. Please add more items to your cart.');
+        if ($spinner.length) $spinner.removeClass('show');
+        return;
+    }
+
+    const orderData = {
+        amount: amountInPaise,
+        currency: 'INR',
+        buyerName: `${firstName} ${lastName}`,
+        buyerEmail: email,
+        buyerPhone: phone,
+        buyerAddress: fullAddress,
+        items: cartItems.map(item => ({
+            name: item.name,
+            weight: item.weight,
+            quantity: item.quantity || 1,
+            price: parseFloat(item.price)
+        })),
+        shippingFee: shippingFee,
+        gst: gstAmount
+    };
+
+    try {
+        console.log('Waiting for Razorpay SDK to load...');
+        await waitForRazorpay();
+
+        console.log('Making API call to create order...', orderData);
+        const response = await fetch(`${API_BASE_URL}/create-order`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                amount: orderData.amount,
+                items: orderData.items,
+                shippingFee: orderData.shippingFee,
+                gst: orderData.gst
+            })
+        });
+
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to create order');
+        }
+
+        const order = await response.json();
+
+        const options = {
+            key: 'rzp_live_adGv4HqiAU33pO',
+            amount: order.amount,
+            currency: 'INR',
+            name: 'Aromahut',
+            description: 'Order Payment',
+            image: 'https://via.placeholder.com/150',
+            order_id: order.id,
+            handler: function (response) {
+                handlePaymentSuccess(response, orderData);
+            },
+            prefill: {
+                name: orderData.buyerName,
+                email: orderData.buyerEmail,
+                contact: orderData.buyerPhone
+            },
+            notes: {
+                address: orderData.buyerAddress
+            },
+            theme: { color: '#ff6b00' },
+            modal: {
+                ondismiss: function () {
+                    if ($spinner.length) $spinner.removeClass('show');
+                }
+            }
+        };
+
+        console.log('Initializing Razorpay with options:', options);
+        const rzp1 = new Razorpay(options);
+        rzp1.on('payment.failed', function (response) {
+            console.error('Razorpay payment failed:', response.error);
+            alert(`Payment failed: ${response.error.description}. Please try again.`);
+            if ($spinner.length) $spinner.removeClass('show');
+        });
+        rzp1.open();
+
+        if ($spinner.length) $spinner.removeClass('show');
+    } catch (error) {
+        console.error('Error in processPayment:', error.message);
+        alert(`Payment failed: ${error.message}. Please try again or contact support.`);
+        if ($spinner.length) $spinner.removeClass('show');
+    }
+}
 
     function handlePaymentSuccess(response, orderData) {
         const paymentData = {
