@@ -552,6 +552,55 @@ body {
     }
 }
 
+.continue-shopping-btn {
+    display: inline-block;
+    padding: 12px 30px;
+    background: linear-gradient(135deg, #ff6b00, #ff8c00, #ffaa00);
+    color: white !important;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 50px;
+    border: none;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+}
+
+.continue-shopping-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent
+    );
+    transition: 0.5s;
+}
+
+.continue-shopping-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(255, 107, 0, 0.4);
+}
+
+.continue-shopping-btn:hover::before {
+    left: 100%;
+}
+
+/* If you need to override any existing styles */
+a.continue-shopping-btn {
+    text-decoration: none !important;
+    color: white !important;
+}
+
 </style>
     <body>
 
@@ -636,20 +685,20 @@ body {
                     <div class="p-4">
                         <h1 class="display-6 mb-4">Cart Total</h1>
                         <div class="d-flex justify-content-between mb-4">
-                            <h5 class="mb-0 me-4 text-dark">Subtotal:</h5>
+                            <h5 class="mb-0 me-4 text-dark">Overall Product Cost:</h5>
                             <p class="mb-0 subtotal text-dark"></p>
                         </div>
-                        <div class="d-flex justify-content-between">
+                        <!-- <div class="d-flex justify-content-between">
                             <h5 class="mb-0 me-4 text-dark">Shipping</h5>
                             <div class="">
                                 <p class="mb-0 shipping text-dark">₹1.00</p>
                             </div>
-                        </div>
+                        </div> -->
                     </div>
-                    <div class="py-4 mb-4 border-top border-bottom d-flex justify-content-between">
+                    <!-- <div class="py-4 mb-4 border-top border-bottom d-flex justify-content-between">
                         <h5 class="mb-0 ps-4 me-4 text-dark">Total</h5>
                         <p class="mb-0 pe-4 Total">₹00</p>
-                    </div>
+                    </div> -->
                     <button class="btn border-secondary rounded-pill px-4 py-3 text-light text-uppercase mb-5 ms-4" type="button" onclick="location.href='checkout.html'" style="background-color: #1F75FE;">Proceed Checkout</button>
                 </div>
             </div>
@@ -738,9 +787,9 @@ body {
 =======
                 <p class=" mb-0">
                     
-                            <span style="color: #ffffff;">Designed and Developed By </span> <a class="border-bottom "
-                            href="https://prasannavenkateshportfolio14.netlify.app/">Prasanna Venkatesh K</a><h1></h1>
+                                              <span style="color: #ffffff;">Designed and Developed By </span> <a class="border-bottom "
                             href="https://mohanxz.github.io/">Mohan Raj S</a> <span> & </span> <a class="border-bottom "
+                            href="https://prasannavenkateshportfolio14.netlify.app/">Prasanna Venkatesh K</a><h1></h1>
 
                         
                 </p>
@@ -782,7 +831,7 @@ $(document).ready(function () {
                         <td colspan="6" class="text-center py-5">
                             <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
                             <h4 class="text-muted">Your cart is empty</h4>
-                            <a href="index.html" class="btn btn-primary mt-3">Continue Shopping</a>
+                            <a href="index.html" class="btn btn-primary mt-3 continue-shopping-btn">Continue Shopping</a>
                         </td>
                     </tr>
                 `);
