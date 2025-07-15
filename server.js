@@ -1,4 +1,4 @@
-
+// server.js (Server-Side)
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
@@ -59,8 +59,8 @@ const orderSchema = new mongoose.Schema({
   }],
   razorpayOrderId: { type: String, required: true, unique: true },
   razorpayPaymentId: { type: String, required: true, unique: true },
-  shippingFee: { type: Number, required: true, min: 0 }, // Added
-  gst: { type: Number, required: true, min: 0 }, // Added
+  shippingFee: { type: Number, required: true, min: 0 },
+  gst: { type: Number, required: true, min: 0 },
   createdAt: { type: Date, default: Date.now },
   status: { type: String, enum: ['Pending', 'Completed'], default: 'Pending' },
   packetSuccess: { type: Boolean, default: false },
