@@ -13,6 +13,7 @@ const { Server } = require('socket.io');
 const http = require('http');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -58,6 +59,8 @@ const orderSchema = new mongoose.Schema({
     productQuantity: { type: Number, required: true, min: 1 },
     productWeight: { type: String },
   }],
+  shippingFee: { type: Number, required: true, min: 0 },
+  gst: { type: Number, required: true, min: 0 },
   razorpayOrderId: { type: String, required: true, unique: true },
   razorpayPaymentId: { type: String, required: true, unique: true },
   createdAt: { type: Date, default: Date.now },
@@ -344,6 +347,8 @@ app.get('/test-email', async (req, res) => {
       buyerName: 'Test User',
       buyerAddress: '123 Test Street, Test City, 123456',
       items: [{ productName: 'Test Product', productPrice: 100, productQuantity: 1 }],
+      shippingFee: 1.00, // Default for testing
+      gst: 5.50,         // Default for testing
     });
     res.status(200).json({ message: 'Test email sent successfully!' });
   } catch (error) {
@@ -375,7 +380,6 @@ app.post('/create-order', async (req, res) => {
     subtotal += item.price * item.quantity;
   }
 
-  // Calculate total including shippingFee and GST
   const calculatedTotal = subtotal + shippingFee + gst;
   const calculatedAmount = Math.round(calculatedTotal * 100);
 
@@ -408,9 +412,12 @@ app.post('/verify-payment', async (req, res) => {
     buyerPhone,
     buyerAddress,
     items,
+    shippingFee,
+    gst,
   } = req.body;
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature ||
-      !buyerName || !buyerEmail || !buyerPhone || !buyerAddress || !items || !Array.isArray(items) || items.length === 0) {
+      !buyerName || !buyerEmail || !buyerPhone || !buyerAddress || !items || !Array.isArray(items) || items.length === 0 ||
+      !shippingFee || !gst) {
     return res.status(400).json({ status: 'failed', error: 'Missing required fields' });
   }
   const sanitizedBuyerName = sanitizeHtml(buyerName);
@@ -445,6 +452,8 @@ app.post('/verify-payment', async (req, res) => {
         productQuantity: parseInt(item.quantity, 10),
         productWeight: sanitizeHtml(item.weight || ''),
       })),
+      shippingFee: parseFloat(shippingFee),
+      gst: parseFloat(gst),
       razorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
     };
@@ -497,7 +506,7 @@ app.get('/get-order', async (req, res) => {
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
-    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
+    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + order.shippingFee + order.gst;
     const response = {
       id: order.razorpayOrderId,
       paymentId: order.razorpayPaymentId,
@@ -514,6 +523,8 @@ app.get('/get-order', async (req, res) => {
         quantity: item.productQuantity,
         price: item.productPrice,
       })),
+      shippingFee: order.shippingFee,
+      gst: order.gst,
     };
     res.status(200).json(response);
   } catch (error) {
@@ -531,7 +542,8 @@ async function sendOrderEmail(order) {
         pass: 'zrbh uuok rhqe gyoi',
       },
     });
-    const totalAmount = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0) + 1.00;
+    const subtotal = order.items.reduce((sum, item) => sum + item.productPrice * item.productQuantity, 0);
+    const totalAmount = subtotal + order.shippingFee + order.gst;
     const itemsHtml = order.items.map(item => `
       <tr>
         <td style="padding: 8px; border: 1px solid #ddd;">${sanitizeHtml(item.productName)}</td>
@@ -563,7 +575,10 @@ async function sendOrderEmail(order) {
               ${itemsHtml}
             </tbody>
           </table>
-          <p style="margin-top: 20px;"><strong>Total (including ₹1.00 shipping):</strong> ₹${totalAmount.toFixed(2)}</p>
+          <p style="margin-top: 20px;"><strong>Subtotal:</strong> ₹${subtotal.toFixed(2)}</p>
+          <p><strong>Shipping:</strong> ₹${order.shippingFee.toFixed(2)}</p>
+          <p><strong>GST (5%):</strong> ₹${order.gst.toFixed(2)}</p>
+          <p><strong>Total:</strong> ₹${totalAmount.toFixed(2)}</p>
           <h3>Shipping To</h3>
           <p>${sanitizeHtml(order.buyerName.toUpperCase())}</p>
           <p>${sanitizeHtml([order.buyerAddress, order.buyerTown, order.buyerPostalCode].filter(Boolean).join(', ').toUpperCase())}</p>
@@ -579,7 +594,6 @@ async function sendOrderEmail(order) {
   }
 }
 
-// New endpoint to download PDF invoice
 app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
   try {
     const order = await Order.findOne({ razorpayOrderId: req.params.orderId });
@@ -645,7 +659,7 @@ app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
 
     // Table rows
     doc.font('Helvetica');
-    let totalAmount = 0;
+    let subtotal = 0;
     order.items.forEach((item, index) => {
       const rowY = doc.y + 10;
       doc.text(item.productName, tableX, rowY, { width: 200 });
@@ -654,19 +668,22 @@ app.get('/download-invoice/:orderId', authenticateAdmin, async (req, res) => {
       doc.text(`₹${item.productPrice.toFixed(2)}`, tableX + 380, rowY, { width: 80, align: 'right' });
       const itemTotal = item.productPrice * item.productQuantity;
       doc.text(`₹${itemTotal.toFixed(2)}`, tableX + 460, rowY, { width: 80, align: 'right' });
-      totalAmount += itemTotal;
+      subtotal += itemTotal;
       doc.moveDown(0.5);
       doc.lineWidth(0.5).moveTo(tableX, doc.y).lineTo(tableX + 540, doc.y).stroke();
     });
 
     // Totals
     const subtotalY = doc.y + 10;
-    totalAmount += 1.00; // Adding shipping
+    const totalAmount = subtotal + order.shippingFee + order.gst;
     doc.text('Subtotal', tableX + 380, subtotalY, { width: 80, align: 'right' });
-    doc.text(`₹${(totalAmount - 1).toFixed(2)}`, tableX + 460, subtotalY, { width: 80, align: 'right' });
+    doc.text(`₹${subtotal.toFixed(2)}`, tableX + 460, subtotalY, { width: 80, align: 'right' });
     doc.moveDown(0.5);
     doc.text('Shipping', tableX + 380, doc.y, { width: 80, align: 'right' });
-    doc.text('₹1.00', tableX + 460, doc.y, { width: 80, align: 'right' });
+    doc.text(`₹${order.shippingFee.toFixed(2)}`, tableX + 460, doc.y, { width: 80, align: 'right' });
+    doc.moveDown(0.5);
+    doc.text('GST', tableX + 380, doc.y, { width: 80, align: 'right' });
+    doc.text(`₹${order.gst.toFixed(2)}`, tableX + 460, doc.y, { width: 80, align: 'right' });
     doc.moveDown(0.5);
     doc.lineWidth(1).moveTo(tableX, doc.y).lineTo(tableX + 540, doc.y).stroke();
     doc.font('Helvetica-Bold');
