@@ -1165,22 +1165,30 @@ function populateCityDropdown(state) {
         return subtotal;
     }
 
-function updateShippingFee() {
+ function updateShippingFee() {
     const selectedState = $('select[name="state"]').val();
     const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
     
     if (!selectedState || cartItems.length === 0) return 0;
 
-    // Calculate ACTUAL total weight in kg (assuming each item is 100g = 0.1kg)
+    // Calculate ACTUAL total weight in kg (0.1kg per 100g item)
     const totalWeightKg = cartItems.reduce((total, item) => {
         return total + ((item.quantity || 1) * 0.1); // 0.1kg per item
     }, 0);
 
-    const baseRate = shippingRates[selectedState] || shippingRates["Other"]; // ₹40 for TN
-    const slabSize = 1.1; // 1.1kg per slab
-    const slabs = Math.ceil(totalWeightKg / slabSize); // Round UP to full slabs
-    const shippingFee = slabs * baseRate;
+    // Base rates and increments
+    const rates = {
+        "Tamil Nadu": { base: 40, increment: 40 },
+        "Karnataka":  { base: 50, increment: 50 },
+        "Other":      { base: 80, increment: 80 }
+    };
+    const { base, increment } = rates[selectedState] || rates["Other"];
 
+    // Calculate slabs (1.1kg = 1st slab, each extra 1kg = new slab)
+    const slabs = Math.max(1, Math.ceil(Math.max(0, totalWeightKg - 1.1) / 1.0) + 1);
+    const shippingFee = base + (slabs - 1) * increment;
+
+    // Update UI
     const $shipping = $('.shipping');
     if ($shipping.length) {
         $shipping.text(`₹${shippingFee.toFixed(2)}`);
@@ -1189,6 +1197,7 @@ function updateShippingFee() {
     localStorage.setItem('shippingFee', shippingFee.toFixed(2));
     return shippingFee;
 }
+
     function updateTotal() {
         const subtotal = parseFloat(updateSubtotal()) || 0;
         const shippingFee = parseFloat(updateShippingFee()) || 0;
