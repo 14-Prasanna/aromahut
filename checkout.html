@@ -915,74 +915,76 @@ td.qty {
   <script src="js/main.js"></script>
 
 <script>
-    // index.js (Client-Side)
-const API_BASE_URL = "https://aromahut-1.onrender.com"; // Update this to your actual API base URL
+    const API_BASE_URL = "https://aromahut-1.onrender.com"; // Update this to your actual API base URL
 
-// State and city data
-const stateCityData = {
+    // State and city data
+    const stateCityData = {
 "Tamil Nadu": ["Aruppukkottai","Bhavani","Chengalpattu","Chennai","Chidambaram","Coimbatore","Cuddalore","Dharapuram","Dharmapuri","Dindigul","Erode","Gobichettipalayam","Gudalur","Gudiyatham","Hosur","Jayankondam","Kancheepuram","Karaikudi","Karur","Kumbakonam","Madurai","Manapparai","Nagapattinam","Namakkal","Nagercoil","Nanguneri","Neyveli","Ooty","Palani","Paramakudi","Pattukkottai","Perambalur","Pollachi","Pudukkottai","Rajapalayam","Ramanathapuram","Ranipet","Rasipuram","Sankagiri","Sathyamangalam","Sivagangai","Sivakasi","Salem","Sirkali","Tambaram","Tenkasi","Thanjavur","Theni","Thirumangalam","Thiruvannamalai","Thiruvarur","Thoothukudi","Tindivanam","Tiruchendur","Tiruchirappalli","Tiruppur","Tirunelveli","Tiruvallur","Tiruvannamalai","Tiruvethipuram","Udhagamandalam","Udumalaipettai","Vaniyambadi","Vellore","Velur","Villupuram","Virudhunagar","Alandur","Ambattur","Ammainaickanur","Ariyalur","Avadi","Avinashi","Chettithangal","Devakottai","Elayirampannai","Gobichettipalayam","Ilayangudi","Kadayanallur","Kalavai","Kambam","Kangeyam","Kannivadi","Karaikal","Kilakarai","Kodumudi","Kollankodu","Kotagiri","Kovilpatti","Kundrathur","Lalgudi","Manamadurai","Manapparai","Marakkanam","Mayiladuthurai","Melur","Mettupalayam","Mettur","Nagari","Nambiyur","Nandivaram-Guduvancheri","Nangavaram","Nanguneri","Nellikuppam","Neyveli","Omalur","Padmanabhapuram","Palavakkam","Panruti","Papanasam","Pattiveeranpatti","Pennagaram","Periyakulam","Periyasemur","Pollachi","Ponneri","Poonamallee","Pudupattinam","Rajapalayam","Ramanathapuram","Rameswaram","Rasipuram","Sankarankoil","Sathyamangalam","Shenkottai","Sirkali","Sivagiri","Sivakasi","Sriperumbudur","Srirangam","Srivilliputhur","Surandai","Suriyampalayam","Tenkasi","Thammampatti","Tharamangalam","Theni","Thirumangalam","Thiruthuraipoondi","Thiruvarur","Thuraiyur","Thuvakudi","Tindivanam","Tiruchendur","Tiruchengode","Tirupathur","Tiruppattur","Tiruvannamalai","Tittakudi","Udhagamandalam","Udumalaipettai","Unnamalaikadai","Usilampatti","Uthamapalayam","Uthangarai","Vadakkuvalliyur","Valparai","Vaniyambadi","Vedaranyam","Vellakoil","Vellakovil","Vellore","Viluppuram","Virudhachalam","Virudhunagar","Walajapet"],
  "Karnataka": ["Bangalore", "Mysore", "Hubli", "Mangalore", "Belgaum", "Gulbarga", "Davanagere", "Shimoga", "Bellary", "Tumkur"],
         "Other": ["Mumbai", "Delhi", "Hyderabad", "Ahmedabad", "Kolkata", "Pune", "Jaipur", "Lucknow", "Kanpur", "Nagpur"]
     };
 
-// Shipping rates per 1.1kg
-const shippingRates = {
-  "Tamil Nadu": 40,
-  "Karnataka": 50,
-  "Other": 80
-};
+    // Shipping rates per 1.1kg
+    const shippingRates = {
+        "Tamil Nadu": 40,
+        "Karnataka": 50,
+        "Other": 80
+    };
 
-$(document).ready(function () {
-  initFormValidation();
-  populateStateDropdown();
-  updateCartItems();
-  updateSubtotal();
-  updateTotal();
-});
+    $(document).ready(function () {
+        initFormValidation();
+        populateStateDropdown();
+        updateCartItems();
+        updateSubtotal();
+        updateTotal();
+    });
 
-function initFormValidation() {
-  const $billingForm = $('#billing-form');
-  if (!$billingForm.length) {
-    console.error('Billing form (#billing-form) not found');
-    return;
-  }
+    function initFormValidation() {
+        const $billingForm = $('#billing-form');
+        if (!$billingForm.length) {
+            console.error('Billing form (#billing-form) not found');
+            return;
+        }
 
-  $billingForm.on('submit', function (e) {
-    e.preventDefault();
-    if (validateForm()) {
-      processPayment();
+        $billingForm.on('submit', function (e) {
+            e.preventDefault();
+            if (validateForm()) {
+                processPayment();
+            }
+        });
+
+        
+        $('input[required], select[required]').on('blur change', function () {
+        validateField($(this));
+            }     );
     }
-  });
 
-  $('input[required], select[required]').on('blur change', function () {
-    validateField($(this));
-  });
-}
+    function populateStateDropdown() {
+        const $stateInput = $('input[name="state"]');
+        if (!$stateInput.length) {
+            console.error('State input field not found');
+            return;
+        }
 
-function populateStateDropdown() {
-  const $stateInput = $('input[name="state"]');
-  if (!$stateInput.length) {
-    console.error('State input field not found');
-    return;
-  }
+        // Replace the input with a select dropdown
+        $stateInput.replaceWith(`
+            <select class="form-control" name="state" required>
+                <option value="" class="text-dark"  selected >Select State</option>
+                <option value="Tamil Nadu" class="text-dark">Tamil Nadu</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Other">Other States</option>
+            </select>
+        `);
 
-  $stateInput.replaceWith(`
-    <select class="form-control" name="state" required>
-      <option value="" selected disabled>Select State</option>
-      <option value="Tamil Nadu">Tamil Nadu</option>
-      <option value="Karnataka">Karnataka</option>
-      <option value="Other">Other States</option>
-    </select>
-  `);
-
-  $('select[name="state"], select[name="town-city"]').on('change', function() {
+        // Add change event listener for state dropdown
+         $('select[name="state"], select[name="town-city"]').on('change', function() {
     const selectedState = $('select[name="state"]').val();
     populateCityDropdown(selectedState);
     updateShippingFee();
     updateTotal();
   });
 
-  $('input[name="town-city"]').replaceWith(`
+       $('input[name="town-city"]').replaceWith(`
     <select class="form-control" name="town-city" required disabled>
       <option value="" selected disabled>Select City</option>
     </select>
@@ -990,24 +992,26 @@ function populateStateDropdown() {
     <input type="text" id="custom-city-input" name="custom-city" placeholder="Enter your city" style="display:none; margin-top:10px;" />
     <div class="invalid-feedback"></div>
   `);
-}
+    }
 
 function populateCityDropdown(state) {
-  const $cityDropdown = $('select[name="town-city"]');
-  const $cityInput = $('#custom-city-input');
-  const cities = stateCityData[state] || [];
+    const $cityDropdown = $('select[name="town-city"]');
+    const $cityInput = $('#custom-city-input'); // Hidden input box for typing custom city
+    const cities = stateCityData[state] || [];
 
-  $cityDropdown.empty().append('<option value="" selected disabled>Select City</option>');
+    $cityDropdown.empty().append('<option value="" selected disabled>Select City</option>');
 
-  cities.forEach(city => {
-    $cityDropdown.append(`<option value="${city}">${city}</option>`);
-  });
+    cities.forEach(city => {
+        $cityDropdown.append(`<option value="${city}">${city}</option>`);
+    });
 
-  $cityDropdown.append('<option value="other">Other (Type your city)</option>');
+    // Add "Other" option
+    $cityDropdown.append('<option value="other">Other (Type your city)</option>');
 
-  $cityDropdown.prop('disabled', false);
+    $cityDropdown.prop('disabled', false);
 
-  $cityDropdown.off('change').on('change', function () {
+    // Handle the "Other" selection
+    $cityDropdown.off('change').on('change', function () {
     if ($(this).val() === 'other') {
       $cityInput.show().prop('required', true).val('').focus();
     } else {
@@ -1017,531 +1021,546 @@ function populateCityDropdown(state) {
   });
 }
 
-function validateField($field) {
-  const value = $field.val().trim();
-  const $feedback = $field.next('.invalid-feedback');
-  if (!$feedback.length) {
-    console.warn(`Invalid feedback element not found for field: ${$field.attr('name')}`);
-  }
 
-  if (!value && $field.prop('required')) {
-    $field.addClass('is-invalid').attr('aria-invalid', 'true');
-    $feedback.text('This field is required');
-    return false;
-  }
+    function validateField($field) {
+        const value = $field.val().trim();
+        const $feedback = $field.next('.invalid-feedback');
+        if (!$feedback.length) {
+            console.warn(`Invalid feedback element not found for field: ${$field.attr('name')}`);
+        }
 
-  if ($field.attr('type') === 'email' && !isValidEmail(value)) {
-    $field.addClass('is-invalid').attr('aria-invalid', 'true');
-    $feedback.text('Please enter a valid email address');
-    return false;
-  }
+        if (!value) {
+            $field.addClass('is-invalid').attr('aria-invalid', 'true');
+            $feedback.text('This field is required');
+            return false;
+        }
 
-  if ($field.attr('name') === 'phone-no' && !isValidPhone(value)) {
-    $field.addClass('is-invalid').attr('aria-invalid', 'true');
-    $feedback.text('Please enter a valid 10-digit phone number');
-    return false;
-  }
+        if ($field.attr('type') === 'email' && !isValidEmail(value)) {
+            $field.addClass('is-invalid').attr('aria-invalid', 'true');
+            $feedback.text('Please enter a valid email address');
+            return false;
+        }
 
-  $field.removeClass('is-invalid').attr('aria-invalid', 'false');
-  $feedback.text('');
-  return true;
-}
+        if ($field.attr('name') === 'phone-no' && !isValidPhone(value)) {
+            $field.addClass('is-invalid').attr('aria-invalid', 'true');
+            $feedback.text('Please enter a valid 10-digit phone number');
+            return false;
+        }
 
-function validateForm() {
-  let isValid = true;
-  let $firstInvalidField = null;
-
-  $('input[required], select[required]').each(function () {
-    if (!validateField($(this))) {
-      isValid = false;
-      if (!$firstInvalidField) $firstInvalidField = $(this);
-    }
-  });
-
-  if (!isValid && $firstInvalidField) {
-    $('html, body').animate({
-      scrollTop: $firstInvalidField.offset().top - 100
-    }, 500);
-    setTimeout(() => $firstInvalidField.focus(), 500);
-  }
-
-  return isValid;
-}
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function isValidPhone(phone) {
-  return /^\d{10}$/.test(phone);
-}
-
-function updateCartItems() {
-  const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-  const $cartContainer = $('#cart-items');
-
-  if (!$cartContainer.length) {
-    console.error('Cart container (#cart-items) not found');
-    return;
-  }
-
-  $cartContainer.empty();
-
-  if (cartItems.length === 0) {
-    $cartContainer.append('<tr><td colspan="5" class="text-center py-4">Your cart is empty</td></tr>');
-    $('#rzp-button').prop('disabled', true).addClass('disabled').attr('aria-disabled', 'true');
-    return;
-  }
-
-  cartItems.forEach((item, index) => {
-    if (!item.name || !item.weight || isNaN(item.price) || !item.id) {
-      console.warn(`Invalid cart item at index ${index}:`, item);
-      return;
+        $field.removeClass('is-invalid').attr('aria-invalid', 'false');
+        $feedback.text('');
+        return true;
     }
 
-    item.pricePerUnit = parseFloat(item.price) || 0;
-    const quantity = item.quantity || 1;
-    const itemRow = $(`
-      <tr>
-        <td data-label="Product" class="text-dark">${item.name}</td>
-        <td data-label="Weight" class="text-dark">${item.weight}</td>
-        <td data-label="Qty">
-          <div class="quantity-control">
-            <button type="button" onclick="changeQuantity(${index}, -1)" aria-label="Decrease quantity">-</button>
-            <span class="text-dark" id="quantity-${index}">${quantity}</span>
-            <button type="button" onclick="changeQuantity(${index}, 1)" aria-label="Increase quantity">+</button>
-          </div>
-        </td>
-        <td data-label="Price" class="text-dark" id="price-${index}">₹${(item.pricePerUnit * quantity).toFixed(2)}</td>
-        <td>
-          <i class="fas fa-trash-alt remove-btn text-danger" 
-             data-index="${index}" 
-             role="button" 
-             tabindex="0" 
-             aria-label="Remove ${item.name}" 
-             style="cursor:pointer">
-          </i>
-        </td>
-      </tr>
-    `);
-    $cartContainer.append(itemRow);
-  });
+    function validateForm() {
+        let isValid = true;
+        let $firstInvalidField = null;
 
-  $cartContainer.off('click keydown', '.fa-trash-alt').on('click keydown', '.fa-trash-alt', function (e) {
-    if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
-    if (e.type === 'keydown') e.preventDefault();
+        $('input[required], select[required]').each(function () {
+            if (!validateField($(this))) {
+                isValid = false;
+                if (!$firstInvalidField) $firstInvalidField = $(this);
+            }
+        });
 
-    const index = $(this).data('index');
-    const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-    cartItems.splice(index, 1);
-    localStorage.setItem('cartItems', JSON.stringify(cartItems));
-    updateCartItems();
-    updateSubtotal();
-    updateTotal();
-    updateCartCount();
-  });
-}
+        if (!isValid && $firstInvalidField) {
+            $('html, body').animate({
+                scrollTop: $firstInvalidField.offset().top - 100
+            }, 500);
+            setTimeout(() => $firstInvalidField.focus(), 500);
+        }
 
-function updateSubtotal() {
-  const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-  let subtotal = 0;
+        return isValid;
+    }
 
-  cartItems.forEach(item => {
-    const price = parseFloat(item.price) || 0;
-    const quantity = item.quantity || 1;
-    subtotal += price * quantity;
-  });
+    function isValidEmail(email) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
 
-  const $subtotal = $('.subtotal');
-  if ($subtotal.length) {
-    $subtotal.text(`₹${subtotal.toFixed(2)}`);
-  } else {
-    console.warn('Subtotal element (.subtotal) not found');
-  }
+    function isValidPhone(phone) {
+        return /^\d{10}$/.test(phone);
+    }
 
-  return subtotal;
-}
+    function updateCartItems() {
+        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+        const $cartContainer = $('#cart-items');
 
+        if (!$cartContainer.length) {
+            console.error('Cart container (#cart-items) not found');
+            return;
+        }
+
+        $cartContainer.empty();
+
+        if (cartItems.length === 0) {
+            $cartContainer.append('<tr><td colspan="5" class="text-center py-4">Your cart is empty</td></tr>');
+            $('#rzp-button').prop('disabled', true).addClass('disabled').attr('aria-disabled', 'true');
+            return;
+        }
+
+        cartItems.forEach((item, index) => {
+            if (!item.name || !item.weight || isNaN(item.price) || !item.id) {
+                console.warn(`Invalid cart item at index ${index}:`, item);
+                return;
+            }
+
+            item.pricePerUnit = parseFloat(item.price) || 0;
+            const quantity = item.quantity || 1;
+            const itemRow = $(`
+                <tr>
+                    <td data-label="Product" class="text-dark">${item.name}</td>
+                    <td data-label="Weight" class="text-dark">${item.weight}</td>
+                    <td data-label="Qty">
+                        <div class="quantity-control">
+                            <button type="button" onclick="changeQuantity(${index}, -1)" aria-label="Decrease quantity">-</button>
+                            <span class="text-dark" id="quantity-${index}">${quantity}</span>
+                            <button type="button" onclick="changeQuantity(${index}, 1)" aria-label="Increase quantity">+</button>
+                        </div>
+                    </td>
+                    <td data-label="Price" class="text-dark" id="price-${index}">₹${(item.pricePerUnit * quantity).toFixed(2)}</td>
+                    <td>
+                        <i class="fas fa-trash-alt remove-btn text-danger" 
+                           data-index="${index}" 
+                           role="button" 
+                           tabindex="0" 
+                           aria-label="Remove ${item.name}" 
+                           style="cursor:pointer">
+                        </i>
+                    </td>
+                </tr>
+            `);
+            $cartContainer.append(itemRow);
+        });
+
+        $cartContainer.off('click keydown', '.fa-trash-alt').on('click keydown', '.fa-trash-alt', function (e) {
+            if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
+            if (e.type === 'keydown') e.preventDefault();
+
+            const index = $(this).data('index');
+            const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+            cartItems.splice(index, 1);
+            localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            updateCartItems();
+            updateSubtotal();
+            updateTotal();
+            updateCartCount();
+        });
+    }
+
+    function updateSubtotal() {
+        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+        let subtotal = 0;
+
+        cartItems.forEach(item => {
+            const price = parseFloat(item.price) || 0;
+            const quantity = item.quantity || 1;
+            subtotal += price * quantity;
+        });
+
+        const $subtotal = $('.subtotal');
+        if ($subtotal.length) {
+            $subtotal.text(`₹${subtotal.toFixed(2)}`);
+        } else {
+            console.warn('Subtotal element (.subtotal) not found');
+        }
+
+        return subtotal;
+    }
 function updateShippingFee() {
-  const selectedState = $('select[name="state"]').val();
-  const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-  
-  if (!selectedState || cartItems.length === 0) {
-    console.log('No state selected or cart is empty, setting shippingFee to 0');
-    localStorage.setItem('shippingFee', '0');
-    $('.shipping').text('₹0.00');
-    return 0;
-  }
-
-  const totalWeightKg = cartItems.reduce((total, item) => {
-    let productWeightKg = 0.1;
-    if (item.weight) {
-      let weightStr = item.weight.toLowerCase().trim();
-      weightStr = weightStr.replace(/\s+/g, "");
-      if (weightStr.includes("kg")) {
-        productWeightKg = parseFloat(weightStr.replace(/kg|kgs|kilogram|kilograms/g, "").trim());
-      } else if (weightStr.includes("g")) {
-        productWeightKg = parseFloat(weightStr.replace(/g|grams|gms/g, "").trim()) / 1000;
-      }
-    }
-    const qty = item.quantity || 1;
-    return total + (productWeightKg * qty);
-  }, 0);
-
-  console.log("Cart Weight Debug:", { totalWeightKg, items: cartItems });
-  
-  let baseRate;
-  if (selectedState === "Tamil Nadu") baseRate = 40;
-  else if (selectedState === "Karnataka") baseRate = 50;
-  else baseRate = 80;
-
-  let slabNumber = Math.ceil(totalWeightKg / 1.0);
-  if (slabNumber < 1) slabNumber = 1;
-
-  const shippingFee = slabNumber * baseRate;
-  console.log(`Calculated shippingFee: ${shippingFee}`);
-  localStorage.setItem('shippingFee', shippingFee.toFixed(2));
-  $('.shipping').text(`₹${shippingFee.toFixed(2)}`);
-  return shippingFee;
-}
-
-function updateTotal() {
-  const subtotal = parseFloat(updateSubtotal()) || 0;
-  const shippingFee = parseFloat(updateShippingFee()) || 0;
-  const gstRate = 0.05; // 5% GST
-  const gstAmount = (subtotal + shippingFee) * gstRate;
-  const totalAmount = subtotal + shippingFee + gstAmount;
-
-  localStorage.setItem('total', totalAmount.toFixed(2));
-
-  const $total = $('.Total');
-  const $shipping = $('.shipping');
-  const $gst = $('.gst');
-  
-  if ($total.length) {
-    $total.text(`₹${totalAmount.toFixed(2)}`);
-  } else {
-    console.warn('Total element (.Total) not found');
-  }
-  
-  if ($shipping.length) {
-    $shipping.text(`₹${shippingFee.toFixed(2)}`);
-  } else {
-    console.warn('Shipping element (.shipping) not found');
-  }
-  
-  if (!$gst.length) {
-    $('.shipping').closest('tr').after(`
-      <tr>
-        <td colspan="4" class="text-end text-dark">GST (5%):</td>
-        <td class="gst text-dark">₹${gstAmount.toFixed(2)}</td>
-      </tr>
-    `);
-  } else {
-    $gst.text(`₹${gstAmount.toFixed(2)}`);
-  }
-
-  const $checkoutButton = $('#rzp-button');
-  if ($checkoutButton.length) {
+    const selectedState = $('select[name="state"]').val();
     const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-    if (cartItems.length === 0 || totalAmount <= 0) {
-      $checkoutButton.prop('disabled', true).addClass('disabled').attr('aria-disabled', 'true');
-    } else {
-      $checkoutButton.prop('disabled', !$('#terms-checkbox').is(':checked')).removeClass('disabled').attr('aria-disabled', 'false');
-    }
-  } else {
-    console.warn('Checkout button (#rzp-button) not found');
-  }
+    
+    if (!selectedState || cartItems.length === 0) return 0;
 
-  return totalAmount;
+    // ✅ Calculate total weight using actual product weights
+    const totalWeightKg = cartItems.reduce((total, item) => {
+        let productWeightKg = 0.1; // default 100g if nothing provided
+
+        if (item.weight) {
+            let weightStr = item.weight.toLowerCase().trim();
+
+            // ✅ Normalize all formats like "grams", "gms", "kgs", "kilograms"
+            weightStr = weightStr.replace(/\s+/g, ""); // remove spaces
+
+            if (weightStr.includes("kg")) {
+                // Example: 1kg, 1kgs, 1kilograms
+                productWeightKg = parseFloat(weightStr.replace(/kg|kgs|kilogram|kilograms/g, "").trim());
+            } else if (weightStr.includes("g")) {
+                // Example: 250g, 250grams, 250gms
+                productWeightKg = parseFloat(weightStr.replace(/g|grams|gms/g, "").trim()) / 1000;
+            }
+        }
+
+        const qty = item.quantity || 1;
+        return total + (productWeightKg * qty);
+    }, 0);
+
+    // ✅ Debugging output to check calculation
+    console.log("Cart Weight Debug:");
+    cartItems.forEach(item => {
+        console.log(
+            `${item.name} | weight: ${item.weight} | qty: ${item.quantity || 1}`
+        );
+    });
+    console.log("➡ Total weight in KG:", totalWeightKg);
+
+    // ✅ Select base rate based on state
+    let baseRate;
+    if (selectedState === "Tamil Nadu") baseRate = 40;
+    else if (selectedState === "Karnataka") baseRate = 50;
+    else baseRate = 80;
+
+    // ✅ Find how many slabs needed (1.1kg, 2.1kg, 3.1kg…)
+    let slabNumber = Math.ceil(totalWeightKg / 1.0);
+    if (slabNumber < 1) slabNumber = 1;
+
+    // ✅ Final shipping fee
+    const shippingFee = slabNumber * baseRate;
+
+    // ✅ Update UI
+    $('.shipping').text(`₹${shippingFee.toFixed(2)}`);
+    localStorage.setItem('shippingFee', shippingFee.toFixed(2));
+    return shippingFee;
 }
 
+
+    function updateTotal() {
+        const subtotal = parseFloat(updateSubtotal()) || 0;
+        const shippingFee = parseFloat(updateShippingFee()) || 0;
+        const gstRate = 0.05; // 5% GST
+        const gstAmount = (subtotal + shippingFee) * gstRate;
+        const totalAmount = subtotal + shippingFee + gstAmount;
+
+        localStorage.setItem('total', totalAmount.toFixed(2));
+
+        const $total = $('.Total');
+        const $shipping = $('.shipping');
+        const $gst = $('.gst');
+        
+        if ($total.length) {
+            $total.text(`₹${totalAmount.toFixed(2)}`);
+        } else {
+            console.warn('Total element (.Total) not found');
+        }
+        
+        if ($shipping.length) {
+            $shipping.text(`₹${shippingFee.toFixed(2)}`);
+        } else {
+            console.warn('Shipping element (.shipping) not found');
+        }
+        
+        // Add GST row if it doesn't exist
+        if (!$gst.length) {
+            $('.shipping').closest('tr').after(`
+                <tr>
+                    <td colspan="4" class="text-end text-dark">GST (5%):</td>
+                    <td class="gst text-dark">₹${gstAmount.toFixed(2)}</td>
+                </tr>
+            `);
+        } else {
+            $gst.text(`₹${gstAmount.toFixed(2)}`);
+        }
+
+        const $checkoutButton = $('#rzp-button');
+        if ($checkoutButton.length) {
+            const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+            if (cartItems.length === 0 || totalAmount <= 0) {
+                $checkoutButton.prop('disabled', true).addClass('disabled').attr('aria-disabled', 'true');
+            } else {
+                $checkoutButton.prop('disabled', !$('#terms-checkbox').is(':checked')).removeClass('disabled').attr('aria-disabled', 'false');
+            }
+        } else {
+            console.warn('Checkout button (#rzp-button) not found');
+        }
+
+        return totalAmount;
+    }
 window.changeQuantity = function (index, change) {
-  const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-  if (!cartItems[index]) return;
+    const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+    if (!cartItems[index]) return;
 
-  let currentQty = cartItems[index].quantity || 1;
+    let currentQty = cartItems[index].quantity || 1;
 
-  if (change === -1 && currentQty === 1) {
-    cartItems.splice(index, 1);
+    // If pressing "-" and qty is 1 → remove item directly
+    if (change === -1 && currentQty === 1) {
+        cartItems.splice(index, 1); // remove item
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+
+        updateCartItems();
+        updateSubtotal();
+        updateTotal();
+        updateCartCount();
+        return;
+    }
+
+    // Otherwise, just update the quantity
+    const newQty = currentQty + change;
+    cartItems[index].quantity = Math.min(newQty, 100); // max 100
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
 
-    updateCartItems();
+    $(`#quantity-${index}`).text(cartItems[index].quantity);
+
+    const pricePerUnit = parseFloat(cartItems[index].price) || 0;
+    const newPrice = pricePerUnit * cartItems[index].quantity;
+    $(`#price-${index}`).text(`₹${newPrice.toFixed(2)}`);
+
     updateSubtotal();
     updateTotal();
     updateCartCount();
-    return;
-  }
-
-  const newQty = currentQty + change;
-  cartItems[index].quantity = Math.min(newQty, 100);
-  localStorage.setItem('cartItems', JSON.stringify(cartItems));
-
-  $(`#quantity-${index}`).text(cartItems[index].quantity);
-
-  const pricePerUnit = parseFloat(cartItems[index].price) || 0;
-  const newPrice = pricePerUnit * cartItems[index].quantity;
-  $(`#price-${index}`).text(`₹${newPrice.toFixed(2)}`);
-
-  updateSubtotal();
-  updateTotal();
-  updateCartCount();
 };
 
-function updateCartCount() {
-  const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-  const totalItems = cartItems.reduce((total, item) => total + (item.quantity || 0), 0);
-  const $cartCountElements = $('.cart-count');
 
-  if (!$cartCountElements.length) {
-    console.warn('No .cart-count elements found');
-    return;
-  }
+    function updateCartCount() {
+        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+        const totalItems = cartItems.reduce((total, item) => total + (item.quantity || 0), 0);
+        const $cartCountElements = $('.cart-count');
 
-  $cartCountElements.each(function () {
-    $(this).text(totalItems);
-    if (typeof window.animate__animated !== 'undefined') {
-      $(this).addClass('animate__animated animate__bounceIn');
-      setTimeout(() => $(this).removeClass('animate__animated animate__bounceIn'), 1000);
-    }
-  });
-}
-
-function waitForRazorpay(maxAttempts = 10, interval = 500) {
-  return new Promise((resolve, reject) => {
-    let attempts = 0;
-    const checkInterval = setInterval(() => {
-      attempts++;
-      console.log(`Checking for Razorpay SDK (attempt ${attempts})...`);
-      if (window.Razorpay) {
-        clearInterval(checkInterval);
-        console.log('Razorpay SDK loaded successfully');
-        resolve();
-      } else if (attempts >= maxAttempts) {
-        clearInterval(checkInterval);
-        console.error('Razorpay SDK failed to load after maximum attempts');
-        reject(new Error('Razorpay SDK not loaded'));
-      }
-    }, interval);
-  });
-}
-
-function processPayment() {
-  const $spinner = $('#spinner');
-  if ($spinner.length) $spinner.addClass('show');
-
-  const $firstName = $('input[name="first-name"]');
-  const $lastName = $('input[name="last-name"]');
-  const $email = $('input[name="email-id"]');
-  const $phone = $('input[name="phone-no"]');
-  const $address = $('input[name="address"]');
-  const $city = $('select[name="town-city"]');
-  const $postalCode = $('input[name="postcode"]');
-  const $state = $('select[name="state"]');
-
-  if (!($firstName.length && $lastName.length && $email.length && $phone.length && 
-        $address.length && $city.length && $postalCode.length && $state.length)) {
-    console.error('One or more form fields are missing');
-    alert('Please fill out all required fields.');
-    if ($spinner.length) $spinner.removeClass('show');
-    return;
-  }
-
-  const firstName = $firstName.val().trim();
-  const lastName = $lastName.val().trim();
-  const email = $email.val().trim();
-  const phone = $phone.val().trim();
-  const address = $address.val().trim();
-  const city = $city.val().trim() === 'other' ? $('#custom-city-input').val().trim() : $city.val().trim();
-  const postalCode = $postalCode.val().trim();
-  const state = $state.val().trim();
-
-  if (!city) {
-    alert('Please select or enter a city');
-    if ($spinner.length) $spinner.removeClass('show');
-    return;
-  }
-
-  const fullAddress = `${address}, ${city}, ${postalCode}, ${state}`;
-  const totalAmount = parseFloat(localStorage.getItem('total')) || 0;
-  const amountInPaise = Math.round(totalAmount * 100);
-  const shippingFee = parseFloat(localStorage.getItem('shippingFee')) || 0;
-  const subtotal = totalAmount / 1.05; // Approximate reverse calculation
-  const gst = (subtotal + shippingFee) * 0.05; // Recalculate GST
-
-  if (isNaN(shippingFee) || shippingFee < 0) {
-    alert('Invalid shipping fee. Please select a state and city again.');
-    if ($spinner.length) $spinner.removeClass('show');
-    return;
-  }
-
-  const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-
-  if (cartItems.length === 0) {
-    alert('Your cart is empty. Please add items to your cart and try again.');
-    if ($spinner.length) $spinner.removeClass('show');
-    return;
-  }
-
-  if (totalAmount <= 0) {
-    alert('The total amount is invalid. Please ensure your cart has items and try again.');
-    if ($spinner.length) $spinner.removeClass('show');
-    return;
-  }
-
-  if (amountInPaise < 100) {
-    alert('The total amount must be at least ₹1. Please add more items to your cart.');
-    if ($spinner.length) $spinner.removeClass('show');
-    return;
-  }
-
-  const orderData = {
-    amount: amountInPaise,
-    currency: 'INR',
-    buyerName: `${firstName} ${lastName}`,
-    buyerEmail: email,
-    buyerPhone: phone,
-    buyerAddress: fullAddress,
-    items: cartItems.map(item => ({
-      name: item.name,
-      weight: item.weight,
-      quantity: item.quantity || 1,
-      price: parseFloat(item.price)
-    })),
-    shippingFee: shippingFee,
-    gst: gst,
-  };
-
-  try {
-    await waitForRazorpay();
-    const response = await fetch(`${API_BASE_URL}/create-order`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        amount: orderData.amount,
-        items: orderData.items,
-        shippingFee: orderData.shippingFee,
-      })
-    });
-
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || 'Failed to create order');
-    }
-
-    const order = await response.json();
-    const options = {
-      key: 'rzp_live_adGv4HqiAU33pO',
-      amount: order.amount,
-      currency: 'INR',
-      name: 'Aromahut',
-      description: 'Order Payment',
-      image: 'https://via.placeholder.com/150',
-      order_id: order.id,
-      handler: function (response) {
-        handlePaymentSuccess(response, orderData);
-      },
-      prefill: {
-        name: orderData.buyerName,
-        email: orderData.buyerEmail,
-        contact: orderData.buyerPhone
-      },
-      notes: {
-        address: orderData.buyerAddress
-      },
-      theme: { color: '#ff6b00' },
-      modal: {
-        ondismiss: function () {
-          if ($spinner.length) $spinner.removeClass('show');
+        if (!$cartCountElements.length) {
+            console.warn('No .cart-count elements found');
+            return;
         }
-      }
-    };
 
-    const rzp1 = new Razorpay(options);
-    rzp1.on('payment.failed', function (response) {
-      console.error('Razorpay payment failed:', response.error);
-      alert(`Payment failed: ${response.error.description}. Please try again.`);
-      if ($spinner.length) $spinner.removeClass('show');
-    });
-    rzp1.open();
-
-    if ($spinner.length) $spinner.removeClass('show');
-  } catch (error) {
-    console.error('Error in processPayment:', error.message);
-    alert(`Payment failed: ${error.message}. Please try again or contact support.`);
-    if ($spinner.length) $spinner.removeClass('show');
-  }
-}
-
-function handlePaymentSuccess(response, orderData) {
-  const paymentData = {
-    razorpay_order_id: response.razorpay_order_id,
-    razorpay_payment_id: response.razorpay_payment_id,
-    razorpay_signature: response.razorpay_signature,
-    buyerName: orderData.buyerName,
-    buyerEmail: orderData.buyerEmail,
-    buyerPhone: orderData.buyerPhone,
-    buyerAddress: orderData.buyerAddress,
-    items: orderData.items,
-    shippingFee: orderData.shippingFee,
-    gst: orderData.gst
-  };
-
-  fetch(`${API_BASE_URL}/verify-payment`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(paymentData)
-  })
-  .then(res => res.json())
-  .then(data => {
-    localStorage.removeItem('cartItems');
-    localStorage.removeItem('total');
-    localStorage.removeItem('shippingFee');
-    const redirectUrl = `greetings.html?orderId=${response.razorpay_order_id}&paymentId=${response.razorpay_payment_id}&status=${data.status}`;
-    window.location.href = redirectUrl;
-  })
-  .catch(error => {
-    console.error('Error verifying payment:', error);
-    alert('There was an error verifying your payment. Please contact support.');
-    const redirectUrl = `greetings.html?orderId=${response.razorpay_order_id}&paymentId=${response.razorpay_payment_id}&status=error`;
-    window.location.href = redirectUrl;
-  });
-}
-
-$('#rzp-button').on('click', function (e) {
-  e.preventDefault();
-  if (validateForm()) {
-    processPayment();
-  }
-});
-
-document.addEventListener('DOMContentLoaded', () => {
-  const termsCheckbox = document.getElementById('terms-checkbox');
-  const termsLink = document.getElementById('terms-link');
-  const termsModal = document.getElementById('terms-modal');
-  const closeModal = document.getElementById('close-modal');
-  const checkoutBtn = document.getElementById('rzp-button');
-
-  termsCheckbox.addEventListener('change', () => {
-    checkoutBtn.disabled = !termsCheckbox.checked;
-    updateTotal();
-  });
-
-  termsLink.addEventListener('click', (e) => {
-    e.preventDefault();
-    termsModal.style.display = 'flex';
-  });
-
-  closeModal.addEventListener('click', () => {
-    termsModal.style.display = 'none';
-  });
-
-  termsModal.addEventListener('click', (e) => {
-    if (e.target === termsModal) {
-      termsModal.style.display = 'none';
+        $cartCountElements.each(function () {
+            $(this).text(totalItems);
+            if (typeof window.animate__animated !== 'undefined') {
+                $(this).addClass('animate__animated animate__bounceIn');
+                setTimeout(() => $(this).removeClass('animate__animated animate__bounceIn'), 1000);
+            }
+        });
     }
-  });
-});
+
+    // Function to check if Razorpay SDK is loaded
+    function waitForRazorpay(maxAttempts = 10, interval = 500) {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const checkInterval = setInterval(() => {
+                attempts++;
+                console.log(`Checking for Razorpay SDK (attempt ${attempts})...`);
+                if (window.Razorpay) {
+                    clearInterval(checkInterval);
+                    console.log('Razorpay SDK loaded successfully');
+                    resolve();
+                } else if (attempts >= maxAttempts) {
+                    clearInterval(checkInterval);
+                    console.error('Razorpay SDK failed to load after maximum attempts');
+                    reject(new Error('Razorpay SDK not loaded'));
+                }
+            }, interval);
+        });
+    }
+
+    async function processPayment() {
+        const $spinner = $('#spinner');
+        if ($spinner.length) {
+            $spinner.addClass('show');
+        }
+
+        const $firstName = $('input[name="first-name"]');
+        const $lastName = $('input[name="last-name"]');
+        const $email = $('input[name="email-id"]');
+        const $phone = $('input[name="phone-no"]');
+        const $address = $('input[name="address"]');
+        const $city = $('select[name="town-city"]');
+        const $postalCode = $('input[name="postcode"]');
+        const $state = $('select[name="state"]');
+
+        if (!($firstName.length && $lastName.length && $email.length && $phone.length && 
+              $address.length && $city.length && $postalCode.length && $state.length)) {
+            console.error('One or more form fields are missing');
+            alert('Please fill out all required fields.');
+            if ($spinner.length) $spinner.removeClass('show');
+            return;
+        }
+
+        const firstName = $firstName.val().trim();
+        const lastName = $lastName.val().trim();
+        const email = $email.val().trim();
+        const phone = $phone.val().trim();
+        const address = $address.val().trim();
+        const city = $city.val().trim();
+        const postalCode = $postalCode.val().trim();
+        const state = $state.val().trim();
+
+        if (!city) {
+            alert('Please select a city');
+            if ($spinner.length) $spinner.removeClass('show');
+            return;
+        }
+
+        const fullAddress = `${address}, ${city}, ${postalCode}, ${state}`;
+        const totalAmount = parseFloat(localStorage.getItem('total')) || 0;
+        const amountInPaise = Math.round(totalAmount * 100);
+
+        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+
+        if (cartItems.length === 0) {
+            alert('Your cart is empty. Please add items to your cart and try again.');
+            if ($spinner.length) $spinner.removeClass('show');
+            return;
+        }
+
+        if (totalAmount <= 0) {
+            alert('The total amount is invalid. Please ensure your cart has items and try again.');
+            if ($spinner.length) $spinner.removeClass('show');
+            return;
+        }
+
+        if (amountInPaise < 100) {
+            alert('The total amount must be at least ₹1. Please add more items to your cart.');
+            if ($spinner.length) $spinner.removeClass('show');
+            return;
+        }
+
+        const orderData = {
+            amount: amountInPaise,
+            currency: 'INR',
+            buyerName: `${firstName} ${lastName}`,
+            buyerEmail: email,
+            buyerPhone: phone,
+            buyerAddress: fullAddress,
+            items: cartItems.map(item => ({
+                name: item.name,
+                weight: item.weight,
+                quantity: item.quantity || 1,
+                price: parseFloat(item.price)
+            })),
+            shippingFee: parseFloat(localStorage.getItem('shippingFee')) || 0,
+            gst: (totalAmount - (parseFloat(localStorage.getItem('shippingFee')) || 0) * 0.05
+        )};
+
+        try {
+            // Wait for Razorpay SDK to load
+            console.log('Waiting for Razorpay SDK to load...');
+            await waitForRazorpay();
+
+            console.log('Making API call to create order...');
+            const response = await fetch(`${API_BASE_URL}/create-order`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: amountInPaise, items: orderData.items })
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Failed to create order');
+            }
+
+            const order = await response.json();
+
+            const options = {
+                key: 'rzp_live_adGv4HqiAU33pO',
+                amount: order.amount,
+                currency: 'INR',
+                name: 'Aromahut',
+                description: 'Order Payment',
+                image: 'https://via.placeholder.com/150',
+                order_id: order.id,
+                handler: function (response) {
+                    handlePaymentSuccess(response, orderData);
+                },
+                prefill: {
+                    name: orderData.buyerName,
+                    email: orderData.buyerEmail,
+                    contact: orderData.buyerPhone
+                },
+                notes: {
+                    address: orderData.buyerAddress
+                },
+                theme: { color: '#ff6b00' },
+                modal: {
+                    ondismiss: function () {
+                        if ($spinner.length) $spinner.removeClass('show');
+                    }
+                }
+            };
+
+            console.log('Initializing Razorpay with options:', options);
+            const rzp1 = new Razorpay(options);
+            rzp1.on('payment.failed', function (response) {
+                console.error('Razorpay payment failed:', response.error);
+                alert(`Payment failed: ${response.error.description}. Please try again.`);
+                if ($spinner.length) $spinner.removeClass('show');
+            });
+            rzp1.open();
+
+            if ($spinner.length) $spinner.removeClass('show');
+        } catch (error) {
+            console.error('Error in processPayment:', error.message);
+            alert(`Payment failed: ${error.message}. Please try again or contact support.`);
+            if ($spinner.length) $spinner.removeClass('show');
+        }
+    }
+
+    function handlePaymentSuccess(response, orderData) {
+        const paymentData = {
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            buyerName: orderData.buyerName,
+            buyerEmail: orderData.buyerEmail,
+            buyerPhone: orderData.buyerPhone,
+            buyerAddress: orderData.buyerAddress,
+            items: orderData.items,
+            shippingFee: orderData.shippingFee,
+            gst: orderData.gst
+        };
+
+        fetch(`${API_BASE_URL}/verify-payment`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(paymentData)
+        })
+        .then(res => res.json())
+        .then(data => {
+            localStorage.removeItem('cartItems');
+            localStorage.removeItem('total');
+            localStorage.removeItem('shippingFee');
+            const redirectUrl = `greetings.html?orderId=${response.razorpay_order_id}&paymentId=${response.razorpay_payment_id}&status=${data.status}`;
+            window.location.href = redirectUrl;
+        })
+        .catch(error => {
+            console.error('Error verifying payment:', error);
+            alert('There was an error verifying your payment. Please contact support.');
+            const redirectUrl = `greetings.html?orderId=${response.razorpay_order_id}&paymentId=${response.razorpay_payment_id}&status=error`;
+            window.location.href = redirectUrl;
+        });
+    }
+
+    $('#rzp-button').on('click', function (e) {
+        e.preventDefault();
+        if (validateForm()) {
+            processPayment();
+        }
+    });
+
+    // Terms and Conditions Checkbox and Modal
+    document.addEventListener('DOMContentLoaded', () => {
+        const termsCheckbox = document.getElementById('terms-checkbox');
+        const termsLink = document.getElementById('terms-link');
+        const termsModal = document.getElementById('terms-modal');
+        const closeModal = document.getElementById('close-modal');
+        const checkoutBtn = document.getElementById('rzp-button');
+
+        termsCheckbox.addEventListener('change', () => {
+            checkoutBtn.disabled = !termsCheckbox.checked;
+            updateTotal(); // Update button state based on cart and checkbox
+        });
+
+        termsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            termsModal.style.display = 'flex';
+        });
+
+        closeModal.addEventListener('click', () => {
+            termsModal.style.display = 'none';
+        });
+
+        termsModal.addEventListener('click', (e) => {
+            if (e.target === termsModal) {
+                termsModal.style.display = 'none';
+            }
+        });
+    });
 </script>
 
 
