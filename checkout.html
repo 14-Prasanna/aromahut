@@ -1164,7 +1164,6 @@ function populateCityDropdown(state) {
 
         return subtotal;
     }
-
 function updateShippingFee() {
     const selectedState = $('select[name="state"]').val();
     const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
@@ -1173,21 +1172,37 @@ function updateShippingFee() {
 
     // ✅ Calculate total weight using actual product weights
     const totalWeightKg = cartItems.reduce((total, item) => {
-        let productWeightKg = 0.1; // default 100g
-        
+        let productWeightKg = 0.1; // default 100g if nothing provided
+
         if (item.weight) {
-            const weightStr = item.weight.toLowerCase().trim();
+            let weightStr = item.weight.toLowerCase().trim();
+
+            // ✅ Normalize all formats like "grams", "gms", "kgs", "kilograms"
+            weightStr = weightStr.replace(/\s+/g, ""); // remove spaces
+
             if (weightStr.includes("kg")) {
-                productWeightKg = parseFloat(weightStr.replace("kg", "").trim());
+                // Example: 1kg, 1kgs, 1kilograms
+                productWeightKg = parseFloat(weightStr.replace(/kg|kgs|kilogram|kilograms/g, "").trim());
             } else if (weightStr.includes("g")) {
-                productWeightKg = parseFloat(weightStr.replace("g", "").trim()) / 1000;
+                // Example: 250g, 250grams, 250gms
+                productWeightKg = parseFloat(weightStr.replace(/g|grams|gms/g, "").trim()) / 1000;
             }
         }
 
-        return total + (productWeightKg * (item.quantity || 1));
+        const qty = item.quantity || 1;
+        return total + (productWeightKg * qty);
     }, 0);
 
-    // ✅ Select base rate
+    // ✅ Debugging output to check calculation
+    console.log("Cart Weight Debug:");
+    cartItems.forEach(item => {
+        console.log(
+            `${item.name} | weight: ${item.weight} | qty: ${item.quantity || 1}`
+        );
+    });
+    console.log("➡ Total weight in KG:", totalWeightKg);
+
+    // ✅ Select base rate based on state
     let baseRate;
     if (selectedState === "Tamil Nadu") baseRate = 40;
     else if (selectedState === "Karnataka") baseRate = 50;
