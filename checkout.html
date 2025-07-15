@@ -1273,32 +1273,27 @@ function updateShippingFee() {
 
         return totalAmount;
     }
-
-   window.changeQuantity = function (index, change) {
+window.changeQuantity = function (index, change) {
     const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-    if (!cartItems[index]) {
-        console.error(`Invalid cart item index: ${index}`);
-        return;
-    }
+    if (!cartItems[index]) return;
 
     let currentQty = cartItems[index].quantity || 1;
 
-    // If user presses "-" and quantity is already 1 → remove product
+    // If pressing "-" and qty is 1 → remove item directly
     if (change === -1 && currentQty === 1) {
-        if (confirm(`Remove "${cartItems[index].name}" from cart?`)) {
-            cartItems.splice(index, 1); // remove item
-            localStorage.setItem('cartItems', JSON.stringify(cartItems));
-            updateCartItems();
-            updateSubtotal();
-            updateTotal();
-            updateCartCount();
-        }
-        return; // stop here
+        cartItems.splice(index, 1); // remove item
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+
+        updateCartItems();
+        updateSubtotal();
+        updateTotal();
+        updateCartCount();
+        return;
     }
 
-    // Otherwise, just update the quantity normally
+    // Otherwise, just update the quantity
     const newQty = currentQty + change;
-    cartItems[index].quantity = Math.min(newQty, 100); // prevent >100
+    cartItems[index].quantity = Math.min(newQty, 100); // max 100
     localStorage.setItem('cartItems', JSON.stringify(cartItems));
 
     $(`#quantity-${index}`).text(cartItems[index].quantity);
@@ -1311,6 +1306,7 @@ function updateShippingFee() {
     updateTotal();
     updateCartCount();
 };
+
 
     function updateCartCount() {
         const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
