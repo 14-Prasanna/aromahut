@@ -1171,30 +1171,41 @@ function updateShippingFee() {
     
     if (!selectedState || cartItems.length === 0) return 0;
 
-    // Calculate total weight (0.1kg per item by default)
+    // ✅ Calculate total weight using actual product weights
     const totalWeightKg = cartItems.reduce((total, item) => {
-        return total + ((item.quantity || 1) * 0.1);
+        let productWeightKg = 0.1; // default 100g
+        
+        if (item.weight) {
+            const weightStr = item.weight.toLowerCase().trim();
+            if (weightStr.includes("kg")) {
+                productWeightKg = parseFloat(weightStr.replace("kg", "").trim());
+            } else if (weightStr.includes("g")) {
+                productWeightKg = parseFloat(weightStr.replace("g", "").trim()) / 1000;
+            }
+        }
+
+        return total + (productWeightKg * (item.quantity || 1));
     }, 0);
 
-    // Base rate per slab
+    // ✅ Select base rate
     let baseRate;
     if (selectedState === "Tamil Nadu") baseRate = 40;
     else if (selectedState === "Karnataka") baseRate = 50;
-    else baseRate = 80; // Other states
+    else baseRate = 80;
 
-    // ✅ Calculate slab number
-    // 1.1kg => 1 slab, 2.1kg => 2 slabs, 3.1kg => 3 slabs ...
+    // ✅ Find how many slabs needed (1.1kg, 2.1kg, 3.1kg…)
     let slabNumber = Math.ceil(totalWeightKg / 1.0);
-    if (slabNumber < 1) slabNumber = 1; // minimum 1 slab
+    if (slabNumber < 1) slabNumber = 1;
 
-    // ✅ Final shipping fee = slabNumber * baseRate
+    // ✅ Final shipping fee
     const shippingFee = slabNumber * baseRate;
 
-    // Update UI
+    // ✅ Update UI
     $('.shipping').text(`₹${shippingFee.toFixed(2)}`);
     localStorage.setItem('shippingFee', shippingFee.toFixed(2));
     return shippingFee;
 }
+
 
     function updateTotal() {
         const subtotal = parseFloat(updateSubtotal()) || 0;
