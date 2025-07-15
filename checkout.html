@@ -924,12 +924,20 @@ td.qty {
         "Other": ["Mumbai", "Delhi", "Hyderabad", "Ahmedabad", "Kolkata", "Pune", "Jaipur", "Lucknow", "Kanpur", "Nagpur"]
     };
 
-    // Shipping rates per 1.1kg
-    const shippingRates = {
-        "Tamil Nadu": 40,
-        "Karnataka": 50,
-        "Other": 80
-    };
+  const shippingRates = {
+    "Tamil Nadu": {
+        baseRate: 40,      // ₹40 for 1.1kg
+        increment: 40,    // +₹40 for each additional 1kg (2.1kg, 3.1kg, etc.)
+    },
+    "Karnataka": {
+        baseRate: 50,      // ₹50 for 1.1kg
+        increment: 50,     // +₹50 for each additional 1kg
+    },
+    "Other": {
+        baseRate: 80,      // ₹80 for 1.1kg
+        increment: 80,     // +₹80 for each additional 1kg
+    }
+};
 
     $(document).ready(function () {
         initFormValidation();
@@ -1165,32 +1173,45 @@ function populateCityDropdown(state) {
         return subtotal;
     }
 
-    function updateShippingFee() {
-        const selectedState = $('select[name="state"]').val();
-        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-        
-        if (!selectedState || cartItems.length === 0) {
-            return 0;
-        }
-
-        // Calculate total weight (assuming each item is 1.1kg for simplicity)
-        const totalWeight = cartItems.reduce((total, item) => {
-            return total + (item.quantity || 1);
-        }, 0);
-
-        const rate = shippingRates[selectedState] || shippingRates["Other"];
-        const shippingFee = totalWeight * rate;
-
-        const $shipping = $('.shipping');
-        if ($shipping.length) {
-            $shipping.text(`₹${shippingFee.toFixed(2)}`);
-        } else {
-            console.warn('Shipping element (.shipping) not found');
-        }
-
-        localStorage.setItem('shippingFee', shippingFee.toFixed(2));
-        return shippingFee;
+  function updateShippingFee() {
+    const selectedState = $('select[name="state"]').val();
+    const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+    
+    if (!selectedState || cartItems.length === 0) {
+        $('.shipping').text('₹0.00');
+        return 0;
     }
+
+    // Calculate total weight (assuming each item is 1.1kg)
+    const totalWeight = cartItems.reduce((total, item) => {
+        return total + (item.quantity || 1);
+    }, 0) * 1.1; // Total weight in kg (e.g., 2 items = 2.2kg)
+
+    const stateRates = shippingRates[selectedState] || shippingRates["Other"];
+    
+    // Calculate shipping fee based on weight thresholds (1.1kg, 2.1kg, 3.1kg...)
+    let shippingFee = 0;
+    if (totalWeight > 0) {
+        if (totalWeight <= 1.1) {
+            shippingFee = stateRates.baseRate; // 1.1kg or less
+        } else {
+            // For weights > 1.1kg, calculate how many full 1kg increments apply
+            const extraWeight = totalWeight - 1.1;
+            const increments = Math.floor(extraWeight) + 1; // Round down and add 1 for the next tier
+            shippingFee = stateRates.baseRate + (stateRates.increment * increments);
+        }
+    }
+
+    const $shipping = $('.shipping');
+    if ($shipping.length) {
+        $shipping.text(`₹${shippingFee.toFixed(2)}`);
+    } else {
+        console.warn('Shipping element (.shipping) not found');
+    }
+
+    localStorage.setItem('shippingFee', shippingFee.toFixed(2));
+    return shippingFee;
+}
 
     function updateTotal() {
         const subtotal = parseFloat(updateSubtotal()) || 0;
