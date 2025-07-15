@@ -1165,32 +1165,36 @@ function populateCityDropdown(state) {
         return subtotal;
     }
 
-    function updateShippingFee() {
-        const selectedState = $('select[name="state"]').val();
-        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-        
-        if (!selectedState || cartItems.length === 0) {
-            return 0;
-        }
-
-        // Calculate total weight (assuming each item is 1.1kg for simplicity)
-        const totalWeight = cartItems.reduce((total, item) => {
-            return total + (item.quantity || 1);
-        }, 0);
-
-        const rate = shippingRates[selectedState] || shippingRates["Other"];
-        const shippingFee = totalWeight * rate;
-
-        const $shipping = $('.shipping');
-        if ($shipping.length) {
-            $shipping.text(`₹${shippingFee.toFixed(2)}`);
-        } else {
-            console.warn('Shipping element (.shipping) not found');
-        }
-
-        localStorage.setItem('shippingFee', shippingFee.toFixed(2));
-        return shippingFee;
+  function updateShippingFee() {
+    const selectedState = $('select[name="state"]').val();
+    const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+    
+    if (!selectedState || cartItems.length === 0) {
+        $('.shipping').text('₹0.00');
+        return 0;
     }
+
+    // Calculate total weight in kg (assuming each item is 1.1kg)
+    const totalWeightKg = cartItems.reduce((total, item) => {
+        return total + ((item.quantity || 1) * 1.1);
+    }, 0);
+
+    // Get base rate for the state
+    const baseRate = shippingRates[selectedState] || shippingRates["Other"];
+    
+    // Calculate shipping in the series: 1.1kg, 2.1kg, 3.1kg, 4.1kg...
+    let shippingFee = baseRate; // Base price for first 1.1kg
+    
+    if (totalWeightKg > 1.1) {
+        // For each additional full kg beyond 1.1kg, add another baseRate
+        const additionalKg = Math.ceil(totalWeightKg - 1.1);
+        shippingFee += additionalKg * baseRate;
+    }
+
+    $('.shipping').text(`₹${shippingFee.toFixed(2)}`);
+    localStorage.setItem('shippingFee', shippingFee.toFixed(2));
+    return shippingFee;
+}
 
     function updateTotal() {
         const subtotal = parseFloat(updateSubtotal()) || 0;
