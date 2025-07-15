@@ -1274,27 +1274,43 @@ function updateShippingFee() {
         return totalAmount;
     }
 
-    window.changeQuantity = function (index, change) {
-        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-        if (!cartItems[index]) {
-            console.error(`Invalid cart item index: ${index}`);
-            return;
+   window.changeQuantity = function (index, change) {
+    const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+    if (!cartItems[index]) {
+        console.error(`Invalid cart item index: ${index}`);
+        return;
+    }
+
+    let currentQty = cartItems[index].quantity || 1;
+
+    // If user presses "-" and quantity is already 1 → remove product
+    if (change === -1 && currentQty === 1) {
+        if (confirm(`Remove "${cartItems[index].name}" from cart?`)) {
+            cartItems.splice(index, 1); // remove item
+            localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            updateCartItems();
+            updateSubtotal();
+            updateTotal();
+            updateCartCount();
         }
+        return; // stop here
+    }
 
-        const newQty = (cartItems[index].quantity || 1) + change;
-        cartItems[index].quantity = newQty < 1 ? 1 : Math.min(newQty, 100);
-        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    // Otherwise, just update the quantity normally
+    const newQty = currentQty + change;
+    cartItems[index].quantity = Math.min(newQty, 100); // prevent >100
+    localStorage.setItem('cartItems', JSON.stringify(cartItems));
 
-        $(`#quantity-${index}`).text(cartItems[index].quantity);
+    $(`#quantity-${index}`).text(cartItems[index].quantity);
 
-        const pricePerUnit = parseFloat(cartItems[index].price) || 0;
-        const newPrice = pricePerUnit * cartItems[index].quantity;
-        $(`#price-${index}`).text(`₹${newPrice.toFixed(2)}`);
+    const pricePerUnit = parseFloat(cartItems[index].price) || 0;
+    const newPrice = pricePerUnit * cartItems[index].quantity;
+    $(`#price-${index}`).text(`₹${newPrice.toFixed(2)}`);
 
-        updateSubtotal();
-        updateTotal();
-        updateCartCount();
-    };
+    updateSubtotal();
+    updateTotal();
+    updateCartCount();
+};
 
     function updateCartCount() {
         const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
