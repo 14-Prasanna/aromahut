@@ -921,6 +921,44 @@ td.qty {
     const stateCityData = {
 "Tamil Nadu": ["Aruppukkottai","Bhavani","Chengalpattu","Chennai","Chidambaram","Coimbatore","Cuddalore","Dharapuram","Dharmapuri","Dindigul","Erode","Gobichettipalayam","Gudalur","Gudiyatham","Hosur","Jayankondam","Kancheepuram","Karaikudi","Karur","Kumbakonam","Madurai","Manapparai","Nagapattinam","Namakkal","Nagercoil","Nanguneri","Neyveli","Ooty","Palani","Paramakudi","Pattukkottai","Perambalur","Pollachi","Pudukkottai","Rajapalayam","Ramanathapuram","Ranipet","Rasipuram","Sankagiri","Sathyamangalam","Sivagangai","Sivakasi","Salem","Sirkali","Tambaram","Tenkasi","Thanjavur","Theni","Thirumangalam","Thiruvannamalai","Thiruvarur","Thoothukudi","Tindivanam","Tiruchendur","Tiruchirappalli","Tiruppur","Tirunelveli","Tiruvallur","Tiruvannamalai","Tiruvethipuram","Udhagamandalam","Udumalaipettai","Vaniyambadi","Vellore","Velur","Villupuram","Virudhunagar","Alandur","Ambattur","Ammainaickanur","Ariyalur","Avadi","Avinashi","Chettithangal","Devakottai","Elayirampannai","Gobichettipalayam","Ilayangudi","Kadayanallur","Kalavai","Kambam","Kangeyam","Kannivadi","Karaikal","Kilakarai","Kodumudi","Kollankodu","Kotagiri","Kovilpatti","Kundrathur","Lalgudi","Manamadurai","Manapparai","Marakkanam","Mayiladuthurai","Melur","Mettupalayam","Mettur","Nagari","Nambiyur","Nandivaram-Guduvancheri","Nangavaram","Nanguneri","Nellikuppam","Neyveli","Omalur","Padmanabhapuram","Palavakkam","Panruti","Papanasam","Pattiveeranpatti","Pennagaram","Periyakulam","Periyasemur","Pollachi","Ponneri","Poonamallee","Pudupattinam","Rajapalayam","Ramanathapuram","Rameswaram","Rasipuram","Sankarankoil","Sathyamangalam","Shenkottai","Sirkali","Sivagiri","Sivakasi","Sriperumbudur","Srirangam","Srivilliputhur","Surandai","Suriyampalayam","Tenkasi","Thammampatti","Tharamangalam","Theni","Thirumangalam","Thiruthuraipoondi","Thiruvarur","Thuraiyur","Thuvakudi","Tindivanam","Tiruchendur","Tiruchengode","Tirupathur","Tiruppattur","Tiruvannamalai","Tittakudi","Udhagamandalam","Udumalaipettai","Unnamalaikadai","Usilampatti","Uthamapalayam","Uthangarai","Vadakkuvalliyur","Valparai","Vaniyambadi","Vedaranyam","Vellakoil","Vellakovil","Vellore","Viluppuram","Virudhachalam","Virudhunagar","Walajapet"],
  "Karnataka": ["Bangalore", "Mysore", "Hubli", "Mangalore", "Belgaum", "Gulbarga", "Davanagere", "Shimoga", "Bellary", "Tumkur"],
+      const stateCityData = {
+  "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Tirupati"],
+  "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Bomdila", "Ziro"],
+  "Assam": ["Guwahati", "Dibrugarh", "Silchar", "Jorhat", "Tezpur"],
+  "Bihar": ["Patna", "Gaya", "Muzaffarpur", "Bhagalpur", "Darbhanga"],
+  "Chhattisgarh": ["Raipur", "Bilaspur", "Durg", "Korba", "Rajnandgaon"],
+  "Goa": ["Panaji", "Margao", "Mapusa", "Vasco da Gama", "Ponda"],
+  "Gujarat": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Bhavnagar"],
+  "Haryana": ["Gurugram", "Faridabad", "Panipat", "Ambala", "Hisar"],
+  "Himachal Pradesh": ["Shimla", "Dharamshala", "Mandi", "Kullu", "Manali"],
+  "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Hazaribagh"],
+  "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam"],
+  "Madhya Pradesh": ["Bhopal", "Indore", "Jabalpur", "Gwalior", "Ujjain"],
+  "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad"],
+  "Manipur": ["Imphal", "Thoubal", "Bishnupur", "Churachandpur", "Ukhrul"],
+  "Meghalaya": ["Shillong", "Tura", "Jowai", "Nongpoh", "Baghmara"],
+  "Mizoram": ["Aizawl", "Lunglei", "Champhai", "Serchhip", "Kolasib"],
+  "Nagaland": ["Kohima", "Dimapur", "Mokokchung", "Wokha", "Zunheboto"],
+  "Odisha": ["Bhubaneswar", "Cuttack", "Rourkela", "Sambalpur", "Berhampur"],
+  "Punjab": ["Amritsar", "Ludhiana", "Jalandhar", "Patiala", "Bathinda"],
+  "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur", "Bikaner", "Ajmer"],
+  "Sikkim": ["Gangtok", "Namchi", "Gyalshing", "Mangan", "Rangpo"],
+  "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Khammam"],
+  "Tripura": ["Agartala", "Dharmanagar", "Udaipur", "Kailasahar", "Belonia"],
+  "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra", "Allahabad"],
+  "Uttarakhand": ["Dehradun", "Haridwar", "Rishikesh", "Nainital", "Haldwani"],
+  "West Bengal": ["Kolkata", "Howrah", "Asansol", "Siliguri", "Durgapur"],
+
+  "Andaman and Nicobar Islands": ["Port Blair", "Havelock", "Diglipur", "Mayabunder"],
+  "Chandigarh": ["Chandigarh"],
+  "Dadra and Nagar Haveli and Daman and Diu": ["Silvassa", "Daman", "Diu"],
+  "Delhi": ["New Delhi", "Dwarka", "Rohini", "Saket", "Karol Bagh"],
+  "Jammu and Kashmir": ["Srinagar", "Jammu", "Anantnag", "Baramulla", "Udhampur"],
+  "Ladakh": ["Leh", "Kargil", "Nubra Valley", "Diskit"],
+  "Lakshadweep": ["Kavaratti", "Agatti", "Minicoy", "Kalpeni"],
+  "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam"]
+};
+
         "Other": ["Mumbai", "Delhi", "Hyderabad", "Ahmedabad", "Kolkata", "Pune", "Jaipur", "Lucknow", "Kanpur", "Nagpur"]
     };
 
