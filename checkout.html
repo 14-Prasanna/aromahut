@@ -1098,10 +1098,7 @@ function populateCityDropdown(state) {
 
     function validateField($field) {
         const value = $field.val().trim();
-        const $feedback = $field.next('.invalid-feedback');
-        if (!$feedback.length) {
-            console.warn(`Invalid feedback element not found for field: ${$field.attr('name')}`);
-        }
+      
 
         if (!value) {
             $field.addClass('is-invalid').attr('aria-invalid', 'true');
