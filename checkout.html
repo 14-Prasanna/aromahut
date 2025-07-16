@@ -921,7 +921,6 @@ td.qty {
     const stateCityData = {
 "Tamil Nadu": ["Aruppukkottai","Bhavani","Chengalpattu","Chennai","Chidambaram","Coimbatore","Cuddalore","Dharapuram","Dharmapuri","Dindigul","Erode","Gobichettipalayam","Gudalur","Gudiyatham","Hosur","Jayankondam","Kancheepuram","Karaikudi","Karur","Kumbakonam","Madurai","Manapparai","Nagapattinam","Namakkal","Nagercoil","Nanguneri","Neyveli","Ooty","Palani","Paramakudi","Pattukkottai","Perambalur","Pollachi","Pudukkottai","Rajapalayam","Ramanathapuram","Ranipet","Rasipuram","Sankagiri","Sathyamangalam","Sivagangai","Sivakasi","Salem","Sirkali","Tambaram","Tenkasi","Thanjavur","Theni","Thirumangalam","Thiruvannamalai","Thiruvarur","Thoothukudi","Tindivanam","Tiruchendur","Tiruchirappalli","Tiruppur","Tirunelveli","Tiruvallur","Tiruvannamalai","Tiruvethipuram","Udhagamandalam","Udumalaipettai","Vaniyambadi","Vellore","Velur","Villupuram","Virudhunagar","Alandur","Ambattur","Ammainaickanur","Ariyalur","Avadi","Avinashi","Chettithangal","Devakottai","Elayirampannai","Gobichettipalayam","Ilayangudi","Kadayanallur","Kalavai","Kambam","Kangeyam","Kannivadi","Karaikal","Kilakarai","Kodumudi","Kollankodu","Kotagiri","Kovilpatti","Kundrathur","Lalgudi","Manamadurai","Manapparai","Marakkanam","Mayiladuthurai","Melur","Mettupalayam","Mettur","Nagari","Nambiyur","Nandivaram-Guduvancheri","Nangavaram","Nanguneri","Nellikuppam","Neyveli","Omalur","Padmanabhapuram","Palavakkam","Panruti","Papanasam","Pattiveeranpatti","Pennagaram","Periyakulam","Periyasemur","Pollachi","Ponneri","Poonamallee","Pudupattinam","Rajapalayam","Ramanathapuram","Rameswaram","Rasipuram","Sankarankoil","Sathyamangalam","Shenkottai","Sirkali","Sivagiri","Sivakasi","Sriperumbudur","Srirangam","Srivilliputhur","Surandai","Suriyampalayam","Tenkasi","Thammampatti","Tharamangalam","Theni","Thirumangalam","Thiruthuraipoondi","Thiruvarur","Thuraiyur","Thuvakudi","Tindivanam","Tiruchendur","Tiruchengode","Tirupathur","Tiruppattur","Tiruvannamalai","Tittakudi","Udhagamandalam","Udumalaipettai","Unnamalaikadai","Usilampatti","Uthamapalayam","Uthangarai","Vadakkuvalliyur","Valparai","Vaniyambadi","Vedaranyam","Vellakoil","Vellakovil","Vellore","Viluppuram","Virudhachalam","Virudhunagar","Walajapet"],
  "Karnataka": ["Bangalore", "Mysore", "Hubli", "Mangalore", "Belgaum", "Gulbarga", "Davanagere", "Shimoga", "Bellary", "Tumkur"],
-      const stateCityData = {
   "Andhra Pradesh": ["Visakhapatnam", "Vijayawada", "Guntur", "Nellore", "Tirupati"],
   "Arunachal Pradesh": ["Itanagar", "Naharlagun", "Pasighat", "Bomdila", "Ziro"],
   "Assam": ["Guwahati", "Dibrugarh", "Silchar", "Jorhat", "Tezpur"],
@@ -932,6 +931,7 @@ td.qty {
   "Haryana": ["Gurugram", "Faridabad", "Panipat", "Ambala", "Hisar"],
   "Himachal Pradesh": ["Shimla", "Dharamshala", "Mandi", "Kullu", "Manali"],
   "Jharkhand": ["Ranchi", "Jamshedpur", "Dhanbad", "Bokaro", "Hazaribagh"],
+  "Karnataka": ["Bengaluru", "Mysuru", "Mangaluru", "Hubballi", "Belagavi"],
   "Kerala": ["Thiruvananthapuram", "Kochi", "Kozhikode", "Thrissur", "Kollam"],
   "Madhya Pradesh": ["Bhopal", "Indore", "Jabalpur", "Gwalior", "Ujjain"],
   "Maharashtra": ["Mumbai", "Pune", "Nagpur", "Nashik", "Aurangabad"],
@@ -943,12 +943,14 @@ td.qty {
   "Punjab": ["Amritsar", "Ludhiana", "Jalandhar", "Patiala", "Bathinda"],
   "Rajasthan": ["Jaipur", "Jodhpur", "Udaipur", "Bikaner", "Ajmer"],
   "Sikkim": ["Gangtok", "Namchi", "Gyalshing", "Mangan", "Rangpo"],
+  "Tamil Nadu": ["Chennai", "Coimbatore", "Madurai", "Salem", "Tiruchirappalli"],
   "Telangana": ["Hyderabad", "Warangal", "Nizamabad", "Karimnagar", "Khammam"],
   "Tripura": ["Agartala", "Dharmanagar", "Udaipur", "Kailasahar", "Belonia"],
   "Uttar Pradesh": ["Lucknow", "Kanpur", "Varanasi", "Agra", "Allahabad"],
   "Uttarakhand": ["Dehradun", "Haridwar", "Rishikesh", "Nainital", "Haldwani"],
   "West Bengal": ["Kolkata", "Howrah", "Asansol", "Siliguri", "Durgapur"],
 
+  // Union Territories
   "Andaman and Nicobar Islands": ["Port Blair", "Havelock", "Diglipur", "Mayabunder"],
   "Chandigarh": ["Chandigarh"],
   "Dadra and Nagar Haveli and Daman and Diu": ["Silvassa", "Daman", "Diu"],
@@ -959,9 +961,7 @@ td.qty {
   "Puducherry": ["Puducherry", "Karaikal", "Mahe", "Yanam"]
 };
 
-        "Other": ["Mumbai", "Delhi", "Hyderabad", "Ahmedabad", "Kolkata", "Pune", "Jaipur", "Lucknow", "Kanpur", "Nagpur"]
-    };
-
+  
     // Shipping rates per 1.1kg
     const shippingRates = {
         "Tamil Nadu": 40,
@@ -1006,12 +1006,48 @@ td.qty {
 
         // Replace the input with a select dropdown
         $stateInput.replaceWith(`
-            <select class="form-control" name="state" required>
-                <option value="" class="text-dark"  selected >Select State</option>
-                <option value="Tamil Nadu" class="text-dark">Tamil Nadu</option>
-                <option value="Karnataka">Karnataka</option>
-                <option value="Other">Other States</option>
-            </select>
+          <select class="form-control" name="state" required>
+  <option value="" class="text-dark" selected>Select State</option>
+  <option value="Andhra Pradesh">Andhra Pradesh</option>
+  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+  <option value="Assam">Assam</option>
+  <option value="Bihar">Bihar</option>
+  <option value="Chhattisgarh">Chhattisgarh</option>
+  <option value="Goa">Goa</option>
+  <option value="Gujarat">Gujarat</option>
+  <option value="Haryana">Haryana</option>
+  <option value="Himachal Pradesh">Himachal Pradesh</option>
+  <option value="Jharkhand">Jharkhand</option>
+  <option value="Karnataka">Karnataka</option>
+  <option value="Kerala">Kerala</option>
+  <option value="Madhya Pradesh">Madhya Pradesh</option>
+  <option value="Maharashtra">Maharashtra</option>
+  <option value="Manipur">Manipur</option>
+  <option value="Meghalaya">Meghalaya</option>
+  <option value="Mizoram">Mizoram</option>
+  <option value="Nagaland">Nagaland</option>
+  <option value="Odisha">Odisha</option>
+  <option value="Punjab">Punjab</option>
+  <option value="Rajasthan">Rajasthan</option>
+  <option value="Sikkim">Sikkim</option>
+  <option value="Tamil Nadu">Tamil Nadu</option>
+  <option value="Telangana">Telangana</option>
+  <option value="Tripura">Tripura</option>
+  <option value="Uttar Pradesh">Uttar Pradesh</option>
+  <option value="Uttarakhand">Uttarakhand</option>
+  <option value="West Bengal">West Bengal</option>
+
+  <!-- Union Territories -->
+  <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+  <option value="Chandigarh">Chandigarh</option>
+  <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra and Nagar Haveli and Daman and Diu</option>
+  <option value="Delhi">Delhi</option>
+  <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+  <option value="Ladakh">Ladakh</option>
+  <option value="Lakshadweep">Lakshadweep</option>
+  <option value="Puducherry">Puducherry</option>
+</select>
+
         `);
 
         // Add change event listener for state dropdown
