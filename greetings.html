@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -921,158 +922,167 @@
 
     function generatePDFInvoice() {
       showLoading();
-      
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-      
-      // Constants for layout
-      const margin = 15;
-      const pageWidth = doc.internal.pageSize.getWidth();
-      const contentWidth = pageWidth - (margin * 2);
-      
-      // Add logo
-      const logoImg = new Image();
-      logoImg.src = 'img/aromahutlogo.png';
-      logoImg.onload = function() {
-        // Use server-side values for totals
-        const subtotal = orderData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        const shippingFee = orderData.shippingFee; // Use server-provided shippingFee
-        const gstAmount = orderData.gst; // Use server-provided gst
-        const grandTotal = subtotal + shippingFee + gstAmount;
 
-        // Company info
-        doc.setFontSize(18);
-        doc.setTextColor(255, 107, 0);
-        doc.setFont('helvetica', 'bold');
-        doc.text('AromaHut', margin, margin + 10);
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
-        doc.setFont('helvetica', 'normal');
-        doc.text('Premium Spices & Herbs', margin, margin + 16);
-        doc.text('70/36, Thiruvenkadam Street, Gugai', margin, margin + 22);
-        doc.text('Salem – 636006, Tamil Nadu', margin, margin + 28);
-        doc.text(`GSTIN: ${orderData.gstin || '33ABCDE1234F1Z5'}`, margin, margin + 34);
-        
-        // Add logo to the right
-        doc.addImage(logoImg, 'PNG', pageWidth - margin - 40, margin, 40, 20);
-        
-        // Invoice title
-        doc.setFontSize(16);
-        doc.setTextColor(0, 0, 0);
-        doc.setFont('helvetica', 'bold');
-        doc.text('TAX INVOICE', pageWidth - margin, margin + 12, { align: 'right' });
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Invoice #: ${orderData.id}`, pageWidth - margin, margin + 18, { align: 'right' });
-        doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, pageWidth - margin, margin + 24, { align: 'right' });
-        
-        // Line separator
-        doc.setDrawColor(255, 107, 0);
-        doc.setLineWidth(0.5);
-        doc.line(margin, margin + 40, pageWidth - margin, margin + 40);
-        
-        // Customer info
-        const customerY = margin + 50;
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Bill To:', margin, customerY);
-        doc.setFont('helvetica', 'bold');
-        doc.text(orderData.buyer.name.toUpperCase(), margin, customerY + 8);
-        doc.setFont('helvetica', 'normal');
-        doc.text(orderData.buyer.address.toUpperCase(), margin, customerY + 16);
-        doc.text(`Phone: ${orderData.buyer.phone}`, margin, customerY + 24);
-        doc.text(`Email: ${orderData.buyer.email}`, margin, customerY + 32);
-        
-        // Table header
-        const tableTop = customerY + 45;
-        doc.setFontSize(12);
-        doc.setFillColor(255, 107, 0);
-        doc.rect(margin, tableTop - 8, contentWidth, 10, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Item', margin + 2, tableTop);
-        doc.text('Weight (g)', margin + 70, tableTop);
-        doc.text('Qty', margin + 100, tableTop, { align: 'right' });
-        doc.text('Unit Price', margin + 130, tableTop, { align: 'right' });
-        doc.text('Amount', margin + 170, tableTop, { align: 'right' });
-        
-        // Table rows
-        let y = tableTop + 12;
-        doc.setFontSize(10);
-        doc.setTextColor(0, 0, 0);
-        doc.setFont('helvetica', 'normal');
-        
-        orderData.items.forEach((item, index) => {
-          if (y > 250) {
-            doc.addPage();
-            y = margin + 20;
-          }
-          
-          doc.text(`${index + 1}. ${item.name}`, margin + 2, y);
-          doc.text(item.weight || '-', margin + 70, y);
-          doc.text(item.quantity.toString(), margin + 100, y, { align: 'right' });
-          doc.text(`Rs.${item.price.toFixed(2)}`, margin + 130, y, { align: 'right' });
-          doc.text(`Rs.${(item.price * item.quantity).toFixed(2)}`, margin + 170, y, { align: 'right' });
-          y += 8;
-        });
-        
-        // Summary
-        y += 10;
-        doc.setFont('helvetica', 'bold');
-        doc.text(`Subtotal:`, margin + 140, y, { align: 'right' });
-        doc.text(`Rs.${subtotal.toFixed(2)}`, margin + 170, y, { align: 'right' });
-        
-        y += 8;
-        doc.text(`Shipping:`, margin + 140, y, { align: 'right' });
-        doc.text(`Rs.${shippingFee.toFixed(2)}`, margin + 170, y, { align: 'right' });
-        
-        y += 8;
-        doc.text(`GST:`, margin + 140, y, { align: 'right' });
-        doc.text(`Rs.${gstAmount.toFixed(2)}`, margin + 170, y, { align: 'right' });
-        
-        y += 12;
-        doc.setFontSize(12);
-        doc.text(`Grand Total:`, margin + 140, y, { align: 'right' });
-        doc.setTextColor(255, 107, 0);
-        doc.text(`Rs.${grandTotal.toFixed(2)}`, margin + 170, y, { align: 'right' });
-        doc.setTextColor(0, 0, 0);
-        doc.setFont('helvetica', 'normal');
-        
-        // Payment info
-        y += 20;
-        doc.setFontSize(10);
-        doc.setTextColor(100, 100, 100);
-        doc.text('Payment Information:', margin, y);
-        doc.text(`Payment ID: ${orderData.paymentId}`, margin, y + 8);
-        doc.text('Payment Method: Online Payment (Razorpay)', margin, y + 16);
-        doc.text('Payment Status: Paid', margin, y + 24);
-        
-        // Footer
-        const footerY = doc.internal.pageSize.getHeight() - 20;
-        doc.setFontSize(8);
-        doc.text('Thank you for your purchase!', margin, footerY);
-        doc.text('AromaHut - Premium Spices and Herbs', pageWidth - margin, footerY, { align: 'right' });
-        doc.text('www.aromahut.in | Email: contact@aromahut.in | Phone: +91 9443383538', 
-                pageWidth / 2, footerY + 8, { align: 'center' });
-        
-        // Save PDF
-        doc.save(`AromaHut_Invoice_${orderData.id}.pdf`);
-        hideLoading();
-        
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 1000);
-      };
-      
-      logoImg.onerror = function() {
-        hideLoading();
-        showError('Failed to load logo for PDF generation.');
-      };
+const doc = new jsPDF({
+  orientation: 'portrait',
+  unit: 'mm',
+  format: 'a4'
+});
+
+// Constants for layout
+const margin = 15;
+const pageWidth = doc.internal.pageSize.getWidth();
+const contentWidth = pageWidth - (margin * 2);
+
+// Add logo
+const logoImg = new Image();
+logoImg.src = 'img/aromahutlogo.png';
+
+logoImg.onload = function () {
+  // Use server-side values for totals
+  const subtotal = orderData.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const shippingFee = orderData.shippingFee;
+  const gstAmount = orderData.gst;
+  const grandTotal = subtotal + shippingFee + gstAmount;
+
+  // Company info
+  doc.setFontSize(18);
+  doc.setTextColor(255, 107, 0);
+  doc.setFont('helvetica', 'bold');
+  doc.text('AromaHut', margin, margin + 10);
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Premium Spices & Herbs', margin, margin + 16);
+  doc.text('70/36, Thiruvenkadam Street, Gugai', margin, margin + 22);
+  doc.text('Salem – 636006, Tamil Nadu', margin, margin + 28);
+  doc.text(`GSTIN: ${orderData.gstin || '33ABCDE1234F1Z5'}`, margin, margin + 34);
+
+  // Add logo to the right
+  doc.addImage(logoImg, 'PNG', pageWidth - margin - 40, margin, 40, 20);
+
+  // Line separator
+  doc.setDrawColor(255, 107, 0);
+  doc.setLineWidth(0.5);
+  doc.line(margin, margin + 40, pageWidth - margin, margin + 40);
+
+  // Customer info
+  const customerY = margin + 50;
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Bill To:', margin, customerY);
+  doc.setFont('helvetica', 'bold');
+  doc.text(orderData.buyer.name.toUpperCase(), margin, customerY + 8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(orderData.buyer.address.toUpperCase(), margin, customerY + 16);
+  doc.text(`Phone: ${orderData.buyer.phone}`, margin, customerY + 24);
+  doc.text(`Email: ${orderData.buyer.email}`, margin, customerY + 32);
+
+  // Table header
+  const tableTop = customerY + 45;
+  doc.setFontSize(12);
+  doc.setFillColor(255, 107, 0);
+  doc.rect(margin, tableTop - 8, contentWidth, 10, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Item', margin + 2, tableTop);
+  doc.text('Weight (g)', margin + 70, tableTop);
+  doc.text('Qty', margin + 100, tableTop, { align: 'right' });
+  doc.text('Unit Price', margin + 130, tableTop, { align: 'right' });
+  doc.text('Amount', margin + 170, tableTop, { align: 'right' });
+
+  // Table rows
+  let y = tableTop + 12;
+  doc.setFontSize(10);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+
+  orderData.items.forEach((item, index) => {
+    if (y > 250) {
+      doc.addPage();
+      y = margin + 20;
     }
+
+    doc.text(`${index + 1}. ${item.name}`, margin + 2, y);
+    doc.text(item.weight || '-', margin + 70, y);
+    doc.text(item.quantity.toString(), margin + 100, y, { align: 'right' });
+    doc.text(`Rs.${item.price.toFixed(2)}`, margin + 130, y, { align: 'right' });
+    doc.text(`Rs.${(item.price * item.quantity).toFixed(2)}`, margin + 170, y, { align: 'right' });
+    y += 8;
+  });
+
+  // Summary
+  y += 10;
+  doc.setFont('helvetica', 'bold');
+  doc.text(`Subtotal:`, margin + 140, y, { align: 'right' });
+  doc.text(`Rs.${subtotal.toFixed(2)}`, margin + 170, y, { align: 'right' });
+
+  y += 8;
+  doc.text(`Shipping:`, margin + 140, y, { align: 'right' });
+  doc.text(`Rs.${shippingFee.toFixed(2)}`, margin + 170, y, { align: 'right' });
+
+  y += 8;
+  doc.text(`GST:`, margin + 140, y, { align: 'right' });
+  doc.text(`Rs.${gstAmount.toFixed(2)}`, margin + 170, y, { align: 'right' });
+
+  y += 12;
+  doc.setFontSize(12);
+  doc.text(`Grand Total:`, margin + 140, y, { align: 'right' });
+  doc.setTextColor(255, 107, 0);
+  doc.text(`Rs.${grandTotal.toFixed(2)}`, margin + 170, y, { align: 'right' });
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+
+  // Payment info + TAX INVOICE section
+  y += 20;
+  doc.setFontSize(10);
+  doc.setTextColor(100, 100, 100);
+
+  const paymentInfoX = margin;
+  const taxInvoiceX = pageWidth / 2 + 20;
+
+  // Payment info (left)
+  doc.text('Payment Information:', paymentInfoX, y);
+  doc.text(`Payment ID: ${orderData.paymentId}`, paymentInfoX, y + 8);
+  doc.text('Payment Method: Online Payment (Razorpay)', paymentInfoX, y + 16);
+  doc.text('Payment Status: Paid', paymentInfoX, y + 24);
+
+  // TAX INVOICE (right)
+  doc.setFontSize(14);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'bold');
+  doc.text('TAX INVOICE', taxInvoiceX, y);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Invoice #: ${orderData.id}`, taxInvoiceX, y + 8);
+  doc.text(`Date: ${new Date().toLocaleDateString('en-IN')}`, taxInvoiceX, y + 16);
+
+  // Footer
+  const footerY = doc.internal.pageSize.getHeight() - 20;
+  doc.setFontSize(8);
+  doc.text('Thank you for your purchase!', margin, footerY);
+  doc.text('AromaHut - Premium Spices and Herbs', pageWidth - margin, footerY, { align: 'right' });
+  doc.text(
+    'www.aromahut.in | Email: contact@aromahut.in | Phone: +91 9443383538',
+    pageWidth / 2,
+    footerY + 8,
+    { align: 'center' }
+  );
+
+  // Save PDF
+  doc.save(`AromaHut_Invoice_${orderData.id}.pdf`);
+  hideLoading();
+
+  setTimeout(() => {
+    window.location.href = 'index.html';
+  }, 1000);
+};
+
+logoImg.onerror = function () {
+  hideLoading();
+  showError('Failed to load logo for PDF generation.');
+};
 
     function showLoading() {
       document.getElementById('loadingIndicator').style.display = 'flex';
