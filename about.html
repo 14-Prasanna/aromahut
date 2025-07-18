@@ -1175,6 +1175,30 @@ footer {
     right: 0;
 }
 
+          /* Remove default spacing */
+body {
+    margin: 0;
+    padding: 0;
+}
+
+/* Ensure footer sticks to bottom */
+footer {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+/* Remove container padding if needed */
+.container-fluid, .container {
+    padding-right: 0;
+    padding-left: 0;
+}
+
+/* Remove space after last content */
+section:last-child, div:last-child {
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
     
   </style>
   <div class="container-fluid" id="mainNavbar">
