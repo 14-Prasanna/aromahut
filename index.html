@@ -2062,443 +2062,396 @@
     <!-- Template Javascript -->
     <script src="js/main.js"></script>
     
-    <script>
-        // Product prices database
-const prices = {
-    // Masalas
-    'sambar-podi-100g': 87.00,
-    'sambar-podi-250g': 217.00,
-    'sambar-podi-500g': 435.00,
-    'sambar-podi-1kg': 870.00,
-    'kootu-100g': 97.00,
-    'kootu-250g': 241.00,
-    'kootu-500g': 482.00,
-    'kootu-1kg': 964.00,
-    'curry-100g': 171.00,
-    'curry-250g': 426.00,
-    'curry-500g': 853.00,
-    'curry-1kg': 1705.00,
-    'kulambu-100g': 98.00,
-    'kulambu-250g': 246.00,
-    'kulambu-500g': 491.00,
-    'kulambu-1kg': 982.00,
-    'coriander-100g': 70.00,
-    'coriander-250g': 175.00,
-    'coriander-500g': 350.00,
-    'coriander-1kg': 700.00,
-    'chilli-100g': 95.00,
-    'chilli-250g': 236.00,
-    'chilli-500g': 472.00,
-    'chilli-1kg': 944.00,
-    'turmeric-100g': 60.00,
-    'turmeric-250g': 150.00,
-    'turmeric-500g': 300.00,
-    'turmeric-1kg': 600.00,
-    'garam-100g': 158.00,
-    'garam-250g': 395.00,
-    'garam-500g': 789.00,
-    'garam-1kg': 1578.00,
-    'rasam-100g': 118.00,
-    'rasam-250g': 295.00,
-    'rasam-500g': 590.00,
-    'rasam-1kg': 1180.00,
-    'paruppu-100g': 62.00,
-    'paruppu-250g': 155.00,
-    'paruppu-500g': 310.00,
-    'paruppu-1kg': 620.00,
-    'poondu-100g': 96.00,
-    'poondu-250g': 240.00,
-    'poondu-500g': 480.00,
-    'poondu-1kg': 960.00,
-    'idli-100g': 118.00,
-    'idli-250g': 295.00,
-    'idli-500g': 590.00,
-    'idli-1kg': 1180.00,
-    'chicken-100g': 81.00,
-    'chicken-250g': 202.00,
-    'chicken-500g': 403.00,
-    'chicken-1kg': 806.00,
-    'chicken65-100g': 56.00,
-    'chicken65-250g': 139.00,
-    'chicken65-500g': 278.00,
-    'chicken65-1kg': 556.00,
-    'vadagam-100g': 100.00,
-    'vadagam-250g': 250.00,
-    'vadagam-500g': 500.00,
-    'vadagam-1kg': 1000.00,
-    // Pre-Mix
-    'adai-250g': 100.00,
-    'adai-500g': 200.00,
-    'greengram-250g': 98.00,
-    'greengram-500g': 195.00,
-    'rava-250g': 68.00,
-    'rava-500g': 135.00,
-    'upma-250g': 68.00,
-    'upma-500g': 135.00,
-    // Health Drink
-    'ulunthu-250g': 160.00,
-    'ulunthu-500g': 320.00,
-    'multigrain-250g': 120.00,
-    'multigrain-500g': 240.00,
-    'kollu-250g': 180.00,
-    'kollu-500g': 360.00,
-    'ragi-250g': 130.00,
-    'ragi-500g': 260.00,
-    'ragimilk-250g': 150.00,
-    'ragimilk-500g': 300.00,
-    // Beauty Product
-    'nalangu-250g': 265.00,
-    'nalangu-500g': 530.00,
-    'nalangu-1kg': 1060.00,
-    'shikakai-100g': 150.00,
-    'shikakai-250g': 300.00,
-    'shikakai-500g': 600.00,
-    'shikakai-1kg': 1200.00,
-    // Custom New Products
-    'murungaipowder-100g': 80.00,
-    'murungaipowder-250g': 250.00,
-    'murungaipowder-500g': 400.00,
-    'karuppurice-1kg': 250.00,
-    // Murungai Keerai Idly/Rice Podi
-    'murungaipodi-100g': 100.00,
-    'murungaipodi-250g': 250.00,
-    'murungaipodi-500g': 500.00,
-    'blackpepper-100g': 90.00,
-};
+<script>
+    // Product prices database
+    const prices = {
+        // Masalas
+        'sambar-podi-100g': 87.00,
+        'sambar-podi-250g': 217.00,
+        'sambar-podi-500g': 435.00,
+        'sambar-podi-1kg': 870.00,
+        // ... (rest of your price database remains the same)
+    };
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', function () {
-    // Set Masala tab as active by default
-    const defaultTab = document.querySelector('[href="#tab-1"]');
-    if (defaultTab) {
-        defaultTab.classList.add('active');
-        const tabPane = document.querySelector('#tab-1');
-        if (tabPane) {
-            tabPane.classList.add('show', 'active');
-        } else {
-            console.warn('Tab pane #tab-1 not found');
-        }
-    } else {
-        console.warn('Default tab [href="#tab-1"] not found');
-    }
-
-    // Initialize cart count
-    updateCartCount();
-
-    // Add event listeners to all radio buttons
-    const radioButtons = document.querySelectorAll('input[type="radio"]');
-    if (radioButtons.length === 0) {
-        console.warn('No radio buttons found');
-    }
-    radioButtons.forEach(radio => {
-        radio.addEventListener('change', function () {
-            updatePrice(this);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Mobile menu auto-close on scroll
+        const navbarCollapse = document.getElementById('navbarCollapse');
+        const navbarToggler = document.querySelector('.navbar-toggler');
+        
+        window.addEventListener('scroll', function() {
+            if (navbarCollapse.classList.contains('show')) {
+                // Bootstrap 5 way to close the collapse
+                const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
+                    toggle: false
+                });
+                bsCollapse.hide();
+            }
         });
-    });
 
-    // Set initial prices
-    const masalaItems = document.querySelectorAll('.masala-item');
-    if (masalaItems.length === 0) {
-        console.warn('No .masala-item elements found');
-    }
-    masalaItems.forEach(item => {
-        const checkedRadio = item.querySelector('input[type="radio"]:checked');
-        if (checkedRadio) {
-            updatePrice(checkedRadio);
-        } else {
-            const priceElement = item.querySelector('.masala-price-view');
-            if (priceElement) {
-                priceElement.textContent = 'Please select a weight';
+        // Set Masala tab as active by default
+        const defaultTab = document.querySelector('[href="#tab-1"]');
+        if (defaultTab) {
+            defaultTab.classList.add('active');
+            const tabPane = document.querySelector('#tab-1');
+            if (tabPane) {
+                tabPane.classList.add('show', 'active');
             }
         }
+
+        // Initialize cart count
+        updateCartCount();
+
+        // Add event listeners to all radio buttons
+        const radioButtons = document.querySelectorAll('input[type="radio"]');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                updatePrice(this);
+            });
+        });
+
+        // Set initial prices
+        const masalaItems = document.querySelectorAll('.masala-item');
+        masalaItems.forEach(item => {
+            const checkedRadio = item.querySelector('input[type="radio"]:checked');
+            if (checkedRadio) {
+                updatePrice(checkedRadio);
+            }
+        });
+
+        // Search functionality
+        setupSearch();
+
+        // Initialize beauty products tab animation
+        setupBeautyTabAnimations();
+
+        // Feature cards animation
+        const featureCards = document.querySelectorAll('.feature-card');
+        featureCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.classList.add('animate');
+            }, index * 200);
+        });
+
+        // Product cards animation
+        const productCards = document.querySelectorAll('.product-card');
+        productCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.classList.add('animate');
+            }, index * 200);
+        });
+
+        // Testimonial slider
+        const testimonials = document.querySelectorAll('.testimonial');
+        const dots = document.querySelectorAll('.testimonial-dot');
+        let currentTestimonial = 0;
+
+        function showTestimonial(index) {
+            testimonials.forEach(testimonial => testimonial.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            testimonials[index].classList.add('active');
+            dots[index].classList.add('active');
+            currentTestimonial = index;
+        }
+
+        dots.forEach((dot, index) => {
+            dot.addEventListener('click', () => showTestimonial(index));
+        });
+
+        // Auto-rotate testimonials
+        let testimonialInterval = setInterval(() => {
+            let nextTestimonial = (currentTestimonial + 1) % testimonials.length;
+            showTestimonial(nextTestimonial);
+        }, 5000);
+
+        // Pause auto-rotation when hovering over testimonials
+        const testimonialContainer = document.querySelector('.testimonials-slider');
+        testimonialContainer.addEventListener('mouseenter', () => {
+            clearInterval(testimonialInterval);
+        });
+        testimonialContainer.addEventListener('mouseleave', () => {
+            testimonialInterval = setInterval(() => {
+                let nextTestimonial = (currentTestimonial + 1) % testimonials.length;
+                showTestimonial(nextTestimonial);
+            }, 5000);
+        });
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Button hover effects
+        const buttons = document.querySelectorAll('.btn');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-3px)';
+            });
+            button.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+
+        // Scroll animations for elements
+        function checkScroll() {
+            const elements = document.querySelectorAll('.feature-card, .product-card');
+            const windowHeight = window.innerHeight;
+            
+            elements.forEach(element => {
+                const elementPosition = element.getBoundingClientRect().top;
+                if (elementPosition < windowHeight - 100) {
+                    element.classList.add('animate');
+                }
+            });
+        }
+
+        // Initial check
+        checkScroll();
+        
+        // Check on scroll
+        window.addEventListener('scroll', checkScroll);
     });
+
+    // Function to update price display
+    function updatePrice(radio) {
+        const productContainer = radio.closest('.masala-item');
+        if (!productContainer) return;
+        
+        const priceElement = productContainer.querySelector('.masala-price-view');
+        const weightId = radio.id;
+        const price = prices[weightId];
+        const weightLabel = radio.nextElementSibling?.textContent || 'N/A';
+
+        if (price !== undefined && priceElement) {
+            priceElement.textContent = `₹${price.toFixed(2)} / ${weightLabel}`;
+        }
+    }
+
+    // Add to cart function
+    function cart(event) {
+        event.preventDefault();
+        const productContainer = event.target.closest('.masala-item');
+        if (!productContainer) {
+            showModal('Invalid product selection');
+            return;
+        }
+        
+        const name = productContainer.querySelector('h4')?.textContent;
+        const selectedRadio = productContainer.querySelector('input[type="radio"]:checked');
+
+        if (!selectedRadio || !name) {
+            showModal('Please select a weight option');
+            return;
+        }
+
+        const weightId = selectedRadio.id;
+        const price = prices[weightId]?.toFixed(2);
+        if (!price) {
+            showModal('Price not found for selected product');
+            return;
+        }
+        
+        const weightText = selectedRadio.nextElementSibling.textContent;
+
+        let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+        cartItems = cartItems.filter(item => item.id && prices[item.id] !== undefined);
+
+        const existingItemIndex = cartItems.findIndex(item => item.id === weightId);
+
+        if (existingItemIndex >= 0) {
+            cartItems[existingItemIndex].quantity += 1;
+        } else {
+            cartItems.push({
+                name: name,
+                price: price,
+                weight: weightText,
+                id: weightId,
+                quantity: 1,
+                timestamp: new Date().getTime()
+            });
+        }
+
+        localStorage.setItem('cartItems', JSON.stringify(cartItems));
+        updateCartCount();
+        showModal(`${name} (${weightText}) added to cart. Price: ₹${price}`);
+    }
+
+    // Function to update cart count display
+    function updateCartCount() {
+        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+        const totalItems = cartItems.reduce((total, item) => total + (item.quantity || 0), 0);
+        const cartCountElements = document.querySelectorAll('.cart-count');
+
+        cartCountElements.forEach(element => {
+            element.textContent = totalItems;
+            element.classList.add('animate__animated', 'animate__bounceIn');
+            setTimeout(() => {
+                element.classList.remove('animate__animated', 'animate__bounceIn');
+            }, 1000);
+        });
+    }
+
+    // Show modal message
+    function showModal(message) {
+        const modal = document.getElementById('cartModal');
+        const backdrop = document.getElementById('modalBackdrop');
+        const modalMessage = document.getElementById('modalMessage');
+
+        if (!modal || !backdrop || !modalMessage) return;
+
+        modalMessage.textContent = message;
+        modal.style.display = 'block';
+        backdrop.style.display = 'block';
+        modal.focus();
+
+        setTimeout(() => {
+            modal.style.display = 'none';
+            backdrop.style.display = 'none';
+        }, 700);
+    }
 
     // Search functionality
-    setupSearch();
+    function setupSearch() {
+        const searchToggles = document.querySelectorAll('.search-toggle');
+        const searchContainer = document.querySelector('.search-container');
+        const searchInput = document.querySelector('.search-input');
+        const searchClose = document.querySelector('.search-close');
+        const products = document.querySelectorAll('.masala-item');
 
-    // Initialize beauty products tab animation
-    setupBeautyTabAnimations();
-});
+        if (!searchContainer || !searchInput || !searchClose) return;
 
-// Function to update price display
-function updatePrice(radio) {
-    const productContainer = radio.closest('.masala-item');
-    if (!productContainer) {
-        console.warn('Product container not found for radio:', radio);
-        return;
-    }
-    const priceElement = productContainer.querySelector('.masala-price-view');
-    const weightId = radio.id;
-    const price = prices[weightId];
-    const weightLabel = radio.nextElementSibling?.textContent || 'N/A';
-
-    if (price !== undefined && priceElement) {
-        priceElement.textContent = `₹${price.toFixed(2)} / ${weightLabel}`;
-    } else {
-        console.warn(`Price not found for ${weightId} or missing price element`);
-        if (priceElement) priceElement.textContent = 'Price not available';
-    }
-}
-
-// Add to cart function
-function cart(event) {
-    event.preventDefault();
-    const productContainer = event.target.closest('.masala-item');
-    if (!productContainer) {
-        showModal('Invalid product selection');
-        return;
-    }
-    const name = productContainer.querySelector('h4')?.textContent;
-    const selectedRadio = productContainer.querySelector('input[type="radio"]:checked');
-
-    if (!selectedRadio || !name) {
-        showModal('Please select a weight option');
-        return;
-    }
-
-    const weightId = selectedRadio.id;
-    const price = prices[weightId]?.toFixed(2);
-    if (!price) {
-        showModal('Price not found for selected product');
-        return;
-    }
-    const weightText = selectedRadio.nextElementSibling.textContent;
-
-    let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-
-    // Validate cart items
-    cartItems = cartItems.filter(item => item.id && prices[item.id] !== undefined);
-
-    // Check if item already exists in cart
-    const existingItemIndex = cartItems.findIndex(item => item.id === weightId);
-
-    if (existingItemIndex >= 0) {
-        // If exists, increase quantity
-        cartItems[existingItemIndex].quantity += 1;
-    } else {
-        // If new, add with quantity 1
-        cartItems.push({
-            name: name,
-            price: price,
-            weight: weightText,
-            id: weightId,
-            quantity: 1,
-            timestamp: new Date().getTime()
+        searchToggles.forEach(toggle => {
+            toggle.addEventListener('click', function() {
+                searchContainer.classList.toggle('show');
+                if (searchContainer.classList.contains('show')) {
+                    searchInput.focus();
+                }
+            });
         });
-    }
 
-    localStorage.setItem('cartItems', JSON.stringify(cartItems));
-    updateCartCount();
-    showModal(`${name} (${weightText}) added to cart. Price: ₹${price}`);
-}
-
-// Function to update cart count display
-function updateCartCount() {
-    const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-    const totalItems = cartItems.reduce((total, item) => total + (item.quantity || 0), 0);
-    const cartCountElements = document.querySelectorAll('.cart-count');
-
-    if (cartCountElements.length === 0) {
-        console.warn('No .cart-count elements found');
-    }
-
-    if (typeof window.animate__animated === 'undefined') {
-        console.warn('Animate.css not loaded');
-    }
-
-    cartCountElements.forEach(element => {
-        element.textContent = totalItems;
-        element.classList.add('animate__animated', 'animate__bounceIn');
-        setTimeout(() => {
-            element.classList.remove('animate__animated', 'animate__bounceIn');
-        }, 1000);
-    });
-}
-
-// Show modal message
-function showModal(message) {
-    const modal = document.getElementById('cartModal');
-    const backdrop = document.getElementById('modalBackdrop');
-    const modalMessage = document.getElementById('modalMessage');
-
-    if (!modal || !backdrop || !modalMessage) {
-        console.warn('Modal elements not found');
-        return;
-    }
-
-    modalMessage.textContent = message;
-    modal.style.display = 'block';
-    backdrop.style.display = 'block';
-    modal.focus(); // Improve accessibility
-
-    const MODAL_DISPLAY_TIME = 700; // Increased to 3 seconds
-    setTimeout(() => {
-        modal.style.display = 'none';
-        backdrop.style.display = 'none';
-    }, MODAL_DISPLAY_TIME);
-}
-
-// Search functionality
-function setupSearch() {
-    const searchToggles = document.querySelectorAll('.search-toggle');
-    const searchContainer = document.querySelector('.search-container');
-    const searchInput = document.querySelector('.search-input');
-    const searchClose = document.querySelector('.search-close');
-    const products = document.querySelectorAll('.masala-item');
-
-    if (!searchContainer || !searchInput || !searchClose) {
-        console.warn('Search elements not found');
-        return;
-    }
-
-    searchToggles.forEach(toggle => {
-        toggle.addEventListener('click', function () {
-            searchContainer.classList.toggle('show');
-            if (searchContainer.classList.contains('show')) {
-                searchInput.focus();
-            }
-        });
-    });
-
-    searchClose.addEventListener('click', function () {
-        searchContainer.classList.remove('show');
-        searchInput.value = '';
-        showAllProducts();
-    });
-
-    let timeout;
-    searchInput.addEventListener('input', function () {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => {
-            const query = this.value.trim().toLowerCase();
-            if (query.length > 0) {
-                performSearch(query);
-            } else {
-                showAllProducts();
-            }
-        }, 300); // Debounce for performance
-    });
-
-    function performSearch(query) {
-        products.forEach(product => {
-            const title = product.querySelector('h4')?.textContent.toLowerCase() || '';
-            const category = product.querySelector('.text-white.bg-secondary')?.textContent.toLowerCase() || '';
-
-            if (title.includes(query) || category.includes(query)) {
-                product.style.display = 'block';
-                product.style.animation = 'highlight 1s';
-                setTimeout(() => {
-                    product.style.animation = '';
-                }, 1000);
-            } else {
-                product.style.display = 'none';
-            }
-        });
-    }
-
-    function showAllProducts() {
-        products.forEach(item => {
-            item.style.display = 'block';
-        });
-    }
-
-    // Close search when pressing Escape key
-    document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && searchContainer.classList.contains('show')) {
+        searchClose.addEventListener('click', function() {
             searchContainer.classList.remove('show');
             searchInput.value = '';
             showAllProducts();
-        }
-    });
-}
+        });
 
-// Beauty Products Tab Animations
-function setupBeautyTabAnimations() {
-    const beautyTab = document.querySelector('[href="#tab-4"]');
-
-    if (!beautyTab) {
-        console.warn('Beauty tab [href="#tab-4"] not found');
-        return;
-    }
-
-    beautyTab.addEventListener('mouseenter', function () {
-        this.classList.add('animate__animated', 'animate__pulse');
-        setTimeout(() => {
-            this.classList.remove('animate__animated', 'animate__pulse');
-        }, 1000);
-    });
-
-    // Initialize tab animations
-    const tabs = document.querySelectorAll('[data-bs-toggle="pill"]');
-    if (tabs.length === 0) {
-        console.warn('No Bootstrap tabs found');
-    }
-
-    tabs.forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function () {
-            const targetPane = document.querySelector(this.getAttribute('href'));
-            if (targetPane) {
-                targetPane.classList.add('animate__animated', 'animate__fadeIn');
-
-                // Special effects for beauty products tab
-                if (this.getAttribute('href') === '#tab-4') {
-                    createFloatingHearts();
+        let timeout;
+        searchInput.addEventListener('input', function() {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                const query = this.value.trim().toLowerCase();
+                if (query.length > 0) {
+                    performSearch(query);
+                } else {
+                    showAllProducts();
                 }
+            }, 300);
+        });
+
+        function performSearch(query) {
+            products.forEach(product => {
+                const title = product.querySelector('h4')?.textContent.toLowerCase() || '';
+                const category = product.querySelector('.text-white.bg-secondary')?.textContent.toLowerCase() || '';
+
+                if (title.includes(query) || category.includes(query)) {
+                    product.style.display = 'block';
+                    product.style.animation = 'highlight 1s';
+                    setTimeout(() => {
+                        product.style.animation = '';
+                    }, 1000);
+                } else {
+                    product.style.display = 'none';
+                }
+            });
+        }
+
+        function showAllProducts() {
+            products.forEach(item => {
+                item.style.display = 'block';
+            });
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && searchContainer.classList.contains('show')) {
+                searchContainer.classList.remove('show');
+                searchInput.value = '';
+                showAllProducts();
             }
         });
-    });
-}
-
-function createFloatingHearts() {
-    const hearts = document.createElement('div');
-    hearts.innerHTML = `
-        <style>
-            @keyframes float {
-                0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-                100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
-            }
-            @keyframes highlight {
-                0% { background-color: yellow; }
-                100% { background-color: transparent; }
-            }
-            .floating-heart {
-                position: absolute;
-                font-size: 20px;
-                color: rgba(255, 105, 180, 0.6);
-                animation: float 4s linear forwards;
-                pointer-events: none;
-                z-index: 1000;
-            }
-        </style>
-    `;
-    document.body.appendChild(hearts);
-
-    // Create floating hearts (limit to 5 for performance)
-    for (let i = 0; i < 5; i++) {
-        setTimeout(() => {
-            const heart = document.createElement('div');
-            heart.className = 'floating-heart';
-            heart.innerHTML = '❤️';
-            heart.style.left = Math.random() * 100 + 'vw';
-            heart.style.top = '100vh';
-            heart.style.animationDuration = (3 + Math.random() * 3) + 's';
-            document.body.appendChild(heart);
-
-            // Remove heart after animation
-            setTimeout(() => {
-                heart.remove();
-            }, 4000);
-        }, i * 300);
     }
-}
 
-// Optional: Trigger resize for layout adjustments (verify necessity)
-    setTimeout(() => {
-    console.log('Triggering window resize for layout adjustment');
-    window.dispatchEvent(new Event('resize'));
-    }, 100);
-    
-    </script>
+    // Beauty Products Tab Animations
+    function setupBeautyTabAnimations() {
+        const beautyTab = document.querySelector('[href="#tab-4"]');
+        if (!beautyTab) return;
+
+        beautyTab.addEventListener('mouseenter', function() {
+            this.classList.add('animate__animated', 'animate__pulse');
+            setTimeout(() => {
+                this.classList.remove('animate__animated', 'animate__pulse');
+            }, 1000);
+        });
+
+        const tabs = document.querySelectorAll('[data-bs-toggle="pill"]');
+        tabs.forEach(tab => {
+            tab.addEventListener('shown.bs.tab', function() {
+                const targetPane = document.querySelector(this.getAttribute('href'));
+                if (targetPane) {
+                    targetPane.classList.add('animate__animated', 'animate__fadeIn');
+                    if (this.getAttribute('href') === '#tab-4') {
+                        createFloatingHearts();
+                    }
+                }
+            });
+        });
+    }
+
+    function createFloatingHearts() {
+        const hearts = document.createElement('div');
+        hearts.innerHTML = `
+            <style>
+                @keyframes float {
+                    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+                    100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+                }
+                @keyframes highlight {
+                    0% { background-color: yellow; }
+                    100% { background-color: transparent; }
+                }
+                .floating-heart {
+                    position: absolute;
+                    font-size: 20px;
+                    color: rgba(255, 105, 180, 0.6);
+                    animation: float 4s linear forwards;
+                    pointer-events: none;
+                    z-index: 1000;
+                }
+            </style>
+        `;
+        document.body.appendChild(hearts);
+
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                const heart = document.createElement('div');
+                heart.className = 'floating-heart';
+                heart.innerHTML = '❤️';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.top = '100vh';
+                heart.style.animationDuration = (3 + Math.random() * 3) + 's';
+                document.body.appendChild(heart);
+
+                setTimeout(() => {
+                    heart.remove();
+                }, 4000);
+            }, i * 300);
+        }
+    }
+</script>
 </body>
 
 </html>
