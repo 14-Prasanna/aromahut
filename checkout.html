@@ -1103,7 +1103,8 @@ function populateCityDropdown(state) {
 
     function validateField($field) {
         const value = $field.val().trim();
-      
+      const $feedback = $field.siblings('.invalid-feedback');
+
 
         if (!value) {
             $field.addClass('is-invalid').attr('aria-invalid', 'true');
@@ -1112,6 +1113,8 @@ function populateCityDropdown(state) {
         }
 
         if ($field.attr('type') === 'email' && !isValidEmail(value)) {
+
+
             $field.addClass('is-invalid').attr('aria-invalid', 'true');
             $feedback.text('Please enter a valid email address');
             return false;
