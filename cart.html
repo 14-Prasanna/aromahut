@@ -36,6 +36,39 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
+      <script>
+  // Disable right-click
+  document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // Disable F12, Ctrl+Shift+I, Ctrl+Shift+J
+  document.onkeydown = function (e) {
+    if (
+      e.keyCode === 123 || // F12
+      (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74)) || // Ctrl+Shift+I or J
+      (e.ctrlKey && e.keyCode === 85) // Ctrl+U (View Source)
+    ) {
+      return false;
+    }
+  };
+</script>
+
+<script>
+  const devtools = {
+    isOpen: false,
+    orientation: null,
+  };
+  const threshold = 160;
+  setInterval(() => {
+    const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+    const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+    if (!(heightThreshold && widthThreshold) && ((window.Firebug && window.Firebug.chrome && window.Firebug.chrome.isInitialized) || widthThreshold || heightThreshold)) {
+      // DevTools Opened
+      alert("Inspect Element is disabled on Checkout Page.");
+      window.location.href = "/"; // Redirect or disable action
+    }
+  }, 1000);
+</script>
+
 </head>
 <style>
     /* Add this to your CSS */
