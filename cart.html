@@ -1133,6 +1133,12 @@ $(document).ready(function () {
                 }, 1000);
             });
         }
+            $(window).scroll(function() {
+        if ($('.navbar-collapse').hasClass('show')) {
+            // Close the menu by triggering the click event on the hamburger button
+            $('.navbar-toggler').click();
+        }
+    });
     </script>
     </body>
 </html>
