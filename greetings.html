@@ -1129,6 +1129,11 @@ document.addEventListener('DOMContentLoaded', () => {
     errorElement.style.display = 'block';
   }
 });
+
+    const newWindow = window.open(pdfUrl, '_blank');
+if (!newWindow || newWindow.closed) {
+    showError('Popup blocked. Please enable popups or download manually.');
+}
 </script>
 </head>
 <body>
