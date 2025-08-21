@@ -62,8 +62,25 @@ Frontend:
 Backend:
 # Install dependencies
     1. npm install
+# Configure environment (copy .env.example to .env and set values)
+    2. cp .env.example .env
 # Start server
-    2. node server.js
+    3. node server.js
+
+## 📧 Email Configuration
+
+Order confirmation emails are automatically sent to:
+- The customer who placed the order
+- `aromahut24@gmail.com` (primary business email)
+- Additional notification email (optional)
+
+To add another email recipient for order notifications:
+1. Set the `ADDITIONAL_NOTIFICATION_EMAIL` environment variable in your `.env` file
+2. Example: `ADDITIONAL_NOTIFICATION_EMAIL=manager@aromahut.com`
+
+All order confirmation emails will then be sent to all three recipients.
+
+---
 
 ## 🎯 Project Purpose 
 This project showcases:
