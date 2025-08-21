@@ -552,9 +552,17 @@ async function sendOrderEmail(order) {
         <td style="padding: 8px; border: 1px solid #ddd;">₹${item.productPrice.toFixed(2)}</td>
       </tr>
     `).join('');
+    // Build email recipient list
+    const emailRecipients = [order.buyerEmail, 'aromahut24@gmail.com'];
+    
+    // Add additional notification email if configured
+    if (process.env.ADDITIONAL_NOTIFICATION_EMAIL) {
+      emailRecipients.push(process.env.ADDITIONAL_NOTIFICATION_EMAIL);
+    }
+    
     const mailOptions = {
       from: 'aromahut24@gmail.com',
-        to: [order.buyerEmail, 'aromahut24@gmail.com'],  
+      to: emailRecipients,  
       subject: 'Thank You for Your Purchase from AromaHut!',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd;">
